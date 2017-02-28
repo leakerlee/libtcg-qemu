@@ -156,7 +156,6 @@ void init_task_state(TaskState *ts);
 void task_settid(TaskState *);
 void stop_all_tasks(void);
 extern const char *qemu_uname_release;
-extern unsigned long mmap_min_addr;
 
 /* ??? See if we can avoid exposing so much of the loader internals.  */
 
@@ -419,21 +418,6 @@ int do_vm86(CPUX86State *env, long subfunction, abi_ulong v86_addr);
 void sparc64_set_context(CPUSPARCState *env);
 void sparc64_get_context(CPUSPARCState *env);
 #endif
-
-/* mmap.c */
-int target_mprotect(abi_ulong start, abi_ulong len, int prot);
-abi_long target_mmap(abi_ulong start, abi_ulong len, int prot,
-                     int flags, int fd, abi_ulong offset);
-int target_munmap(abi_ulong start, abi_ulong len);
-abi_long target_mremap(abi_ulong old_addr, abi_ulong old_size,
-                       abi_ulong new_size, unsigned long flags,
-                       abi_ulong new_addr);
-int target_msync(abi_ulong start, abi_ulong len, int flags);
-extern unsigned long last_brk;
-extern abi_ulong mmap_next_start;
-abi_ulong mmap_find_vma(abi_ulong, abi_ulong);
-void mmap_fork_start(void);
-void mmap_fork_end(int child);
 
 /* main.c */
 extern unsigned long guest_stack_size;

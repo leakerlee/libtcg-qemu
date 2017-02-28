@@ -1,4 +1,4 @@
-obj-y = main.o syscall.o strace.o mmap.o signal.o \
+obj-y = main.o syscall.o strace.o signal.o \
 	elfload.o linuxload.o uaccess.o uname.o \
 	safe-syscall.o
 
