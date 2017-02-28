@@ -498,4 +498,12 @@ static inline void arm_call_el_change_hook(ARMCPU *cpu)
     }
 }
 
+#ifndef CONFIG_USER_ONLY
+bool get_phys_addr(CPUARMState *env, target_ulong address,
+                   int access_type, ARMMMUIdx mmu_idx,
+                   hwaddr *phys_ptr, MemTxAttrs *attrs, int *prot,
+                   target_ulong *page_size, uint32_t *fsr,
+                   ARMMMUFaultInfo *fi);
+#endif
+
 #endif
