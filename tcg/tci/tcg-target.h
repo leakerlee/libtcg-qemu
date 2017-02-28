@@ -135,7 +135,7 @@
 /* #define TCG_TARGET_NB_REGS 32 */
 
 /* List of registers which are used by TCG. */
-typedef enum {
+enum {
     TCG_REG_R0 = 0,
     TCG_REG_R1,
     TCG_REG_R2,
@@ -174,7 +174,7 @@ typedef enum {
 #endif
     /* Special value UINT8_MAX is used by TCI to encode constant values. */
     TCG_CONST = UINT8_MAX
-} TCGReg;
+};
 
 #define TCG_AREG0                       (TCG_TARGET_NB_REGS - 2)
 

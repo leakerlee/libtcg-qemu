@@ -12,6 +12,7 @@
 #ifndef QEMU_COMMON_H
 #define QEMU_COMMON_H
 
+#include <stdint.h>
 #include "qemu/fprintf-fn.h"
 
 #define TFR(expr) do { if ((expr) != -1) break; } while (errno == EINTR)
@@ -78,6 +79,8 @@ int qemu_openpty_raw(int *aslave, char *pty_name);
 
 void tcg_exec_init(unsigned long tb_size);
 bool tcg_enabled(void);
+
+typedef uint32_t TCGReg;
 
 void cpu_exec_init_all(void);
 void cpu_exec_step_atomic(CPUState *cpu);

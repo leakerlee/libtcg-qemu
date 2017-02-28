@@ -36,7 +36,7 @@ typedef struct {
 
 /* We only map the first 64 registers */
 #define TCG_TARGET_NB_REGS 64
-typedef enum {
+enum {
     TCG_REG_R0 = 0,
     TCG_REG_R1,
     TCG_REG_R2,
@@ -103,7 +103,7 @@ typedef enum {
     TCG_REG_R63,
 
     TCG_AREG0 = TCG_REG_R32,
-} TCGReg;
+};
 
 #define TCG_CT_CONST_ZERO 0x100
 #define TCG_CT_CONST_S22 0x200

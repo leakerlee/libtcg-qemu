@@ -61,7 +61,7 @@ extern int arm_arch;
 #define TCG_TARGET_INSN_UNIT_SIZE 4
 #define TCG_TARGET_TLB_DISPLACEMENT_BITS 16
 
-typedef enum {
+enum {
     TCG_REG_R0 = 0,
     TCG_REG_R1,
     TCG_REG_R2,
@@ -78,7 +78,7 @@ typedef enum {
     TCG_REG_R13,
     TCG_REG_R14,
     TCG_REG_PC,
-} TCGReg;
+};
 
 #define TCG_TARGET_NB_REGS 16
 

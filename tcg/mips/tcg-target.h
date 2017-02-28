@@ -39,7 +39,7 @@
 #define TCG_TARGET_TLB_DISPLACEMENT_BITS 16
 #define TCG_TARGET_NB_REGS 32
 
-typedef enum {
+enum {
     TCG_REG_ZERO = 0,
     TCG_REG_AT,
     TCG_REG_V0,
@@ -75,7 +75,7 @@ typedef enum {
 
     TCG_REG_CALL_STACK = TCG_REG_SP,
     TCG_AREG0 = TCG_REG_S0,
-} TCGReg;
+};
 
 /* used for function call generation */
 #define TCG_TARGET_STACK_ALIGN        16
