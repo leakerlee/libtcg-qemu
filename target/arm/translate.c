@@ -12085,6 +12085,7 @@ done_generating:
     tb->icount = num_insns;
 }
 
+#ifndef CONFIG_LIBTCG
 static const char *cpu_mode_names[16] = {
   "usr", "fiq", "irq", "svc", "???", "???", "mon", "abt",
   "???", "???", "hyp", "und", "???", "???", "???", "sys"
@@ -12148,6 +12149,7 @@ void arm_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
         cpu_fprintf(f, "FPSCR: %08x\n", (int)env->vfp.xregs[ARM_VFP_FPSCR]);
     }
 }
+#endif
 
 void restore_state_to_opc(CPUARMState *env, TranslationBlock *tb,
                           target_ulong *data)

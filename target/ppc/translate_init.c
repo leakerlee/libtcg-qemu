@@ -9449,6 +9449,7 @@ static void dump_ppc_insns (CPUPPCState *env)
 }
 #endif
 
+#ifndef CONFIG_LIBTCG
 static bool avr_need_swap(CPUPPCState *env)
 {
 #ifdef HOST_WORDS_BIGENDIAN
@@ -9634,6 +9635,7 @@ static int gdb_set_vsx_reg(CPUPPCState *env, uint8_t *mem_buf, int n)
     }
     return 0;
 }
+#endif
 
 static int ppc_fixup_cpu(PowerPCCPU *cpu)
 {
@@ -9736,6 +9738,7 @@ static void ppc_cpu_realizefn(DeviceState *dev, Error **errp)
     }
     init_ppc_proc(cpu);
 
+#ifndef CONFIG_LIBTCG
     if (pcc->insns_flags & PPC_FLOAT) {
         gdb_register_coprocessor(cs, gdb_get_float_reg, gdb_set_float_reg,
                                  33, "power-fpu.xml", 0);
@@ -9752,6 +9755,7 @@ static void ppc_cpu_realizefn(DeviceState *dev, Error **errp)
         gdb_register_coprocessor(cs, gdb_get_vsx_reg, gdb_set_vsx_reg,
                                  32, "power-vsx.xml", 0);
     }
+#endif
 
     qemu_init_vcpu(cs);
 
@@ -10497,11 +10501,12 @@ static void ppc_cpu_class_init(ObjectClass *oc, void *data)
 
     cc->class_by_name = ppc_cpu_class_by_name;
     cc->has_work = ppc_cpu_has_work;
+    cc->dump_statistics = ppc_cpu_dump_statistics;
+    cc->set_pc = ppc_cpu_set_pc;
+#ifndef CONFIG_LIBTCG
     cc->do_interrupt = ppc_cpu_do_interrupt;
     cc->cpu_exec_interrupt = ppc_cpu_exec_interrupt;
     cc->dump_state = ppc_cpu_dump_state;
-    cc->dump_statistics = ppc_cpu_dump_statistics;
-    cc->set_pc = ppc_cpu_set_pc;
     cc->gdb_read_register = ppc_cpu_gdb_read_register;
     cc->gdb_write_register = ppc_cpu_gdb_write_register;
 #ifdef CONFIG_USER_ONLY
@@ -10511,8 +10516,11 @@ static void ppc_cpu_class_init(ObjectClass *oc, void *data)
     cc->vmsd = &vmstate_ppc_cpu;
 #if defined(TARGET_PPC64)
     cc->write_elf64_note = ppc64_cpu_write_elf64_note;
-#endif
-#endif
+#endif /* TARGET_PPC64 */
+#endif /* CONFIG_USER_ONLY */
+
+#endif /* CONFIG_LIBTCG */
+
     cc->cpu_exec_enter = ppc_cpu_exec_enter;
 
     cc->gdb_num_core_regs = 71;

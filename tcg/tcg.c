@@ -22,10 +22,12 @@
  * THE SOFTWARE.
  */
 
-/* define it to use liveness analysis (better code) */
-#define USE_TCG_OPTIMIZATIONS
-
 #include "qemu/osdep.h"
+
+/* define it to use liveness analysis (better code) */
+#ifndef CONFIG_LIBTCG
+# define USE_TCG_OPTIMIZATIONS
+#endif
 
 /* Define to jump the ELF file used to communicate with GDB.  */
 #undef DEBUG_JIT

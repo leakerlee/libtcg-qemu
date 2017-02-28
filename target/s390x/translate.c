@@ -91,6 +91,7 @@ static uint64_t pc_to_link_info(DisasContext *s, uint64_t pc)
     return pc;
 }
 
+#ifndef CONFIG_LIBTCG
 void s390_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                          int flags)
 {
@@ -150,6 +151,7 @@ void s390_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
 
     cpu_fprintf(f, "\n");
 }
+#endif
 
 static TCGv_i64 psw_addr;
 static TCGv_i64 psw_mask;

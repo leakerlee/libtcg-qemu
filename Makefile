@@ -26,7 +26,16 @@ endif
 
 CONFIG_SOFTMMU := $(if $(filter %-softmmu,$(TARGET_DIRS)),y)
 CONFIG_USER_ONLY := $(if $(filter %-user,$(TARGET_DIRS)),y)
+CONFIG_LIBTCG := $(if $(filter %-libtcg,$(TARGET_DIRS)),y)
 CONFIG_ALL=y
+
+# If there's at least a *-libtcg target we need to build everything with -fPIC
+# and with default visibility hidden, so that we don't export symbols that are
+# not needed
+ifeq ($(CONFIG_LIBTCG),y)
+QEMU_CFLAGS += -fPIC -fvisibility=hidden
+endif
+
 -include config-all-devices.mak
 -include config-all-disas.mak
 

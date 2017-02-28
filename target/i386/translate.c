@@ -8527,6 +8527,7 @@ void restore_state_to_opc(CPUX86State *env, TranslationBlock *tb,
     }
 }
 
+#ifndef CONFIG_LIBTCG
 /***********************************************************/
 /* x86 debug */
 
@@ -8849,3 +8850,4 @@ void x86_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
         cpu_fprintf(f, "\n");
     }
 }
+#endif

@@ -24,7 +24,11 @@
 #include "qemu-common.h"
 #include "hw/qdev-properties.h"
 #include "migration/vmstate.h"
-#include "linux-user/syscall_defs.h"
+#ifdef CONFIG_LIBTCG
+# define TARGET_SIGSEGV 0
+#else
+# include "linux-user/syscall_defs.h"
+#endif
 #include "exec/exec-all.h"
 
 TileGXCPU *cpu_tilegx_init(const char *cpu_model)
@@ -94,6 +98,7 @@ static void tilegx_cpu_initfn(Object *obj)
     }
 }
 
+#ifndef CONFIG_LIBTCG
 static void tilegx_cpu_do_interrupt(CPUState *cs)
 {
     cs->exception_index = -1;
@@ -121,6 +126,7 @@ static bool tilegx_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
     }
     return false;
 }
+#endif
 
 static void tilegx_cpu_class_init(ObjectClass *oc, void *data)
 {
@@ -135,11 +141,13 @@ static void tilegx_cpu_class_init(ObjectClass *oc, void *data)
     cc->reset = tilegx_cpu_reset;
 
     cc->has_work = tilegx_cpu_has_work;
+#ifndef CONFIG_LIBTCG
     cc->do_interrupt = tilegx_cpu_do_interrupt;
     cc->cpu_exec_interrupt = tilegx_cpu_exec_interrupt;
     cc->dump_state = tilegx_cpu_dump_state;
-    cc->set_pc = tilegx_cpu_set_pc;
     cc->handle_mmu_fault = tilegx_cpu_handle_mmu_fault;
+#endif
+    cc->set_pc = tilegx_cpu_set_pc;
     cc->gdb_num_core_regs = 0;
 }
 

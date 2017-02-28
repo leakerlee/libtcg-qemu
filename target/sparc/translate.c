@@ -5965,6 +5965,7 @@ void restore_state_to_opc(CPUSPARCState *env, TranslationBlock *tb,
     }
 }
 
+#ifndef CONFIG_LIBTCG
 static void cpu_print_cc(FILE *f, fprintf_function cpu_fprintf,
                          uint32_t cc)
 {
@@ -6049,3 +6050,4 @@ void sparc_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
 #endif
     cpu_fprintf(f, "\n");
 }
+#endif

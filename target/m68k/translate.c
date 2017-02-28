@@ -5136,6 +5136,7 @@ void gen_intermediate_code(CPUM68KState *env, TranslationBlock *tb)
     tb->icount = num_insns;
 }
 
+#ifndef CONFIG_LIBTCG
 void m68k_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                          int flags)
 {
@@ -5158,6 +5159,7 @@ void m68k_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                 (sr & CCF_V) ? 'V' : '-', (sr & CCF_C) ? 'C' : '-');
     cpu_fprintf (f, "FPRESULT = %12g\n", *(double *)&env->fp_result);
 }
+#endif
 
 void restore_state_to_opc(CPUM68KState *env, TranslationBlock *tb,
                           target_ulong *data)

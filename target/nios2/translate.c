@@ -909,6 +909,7 @@ void gen_intermediate_code(CPUNios2State *env, TranslationBlock *tb)
 #endif
 }
 
+#ifndef CONFIG_LIBTCG
 void nios2_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                           int flags)
 {
@@ -937,6 +938,7 @@ void nios2_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
 #endif
     cpu_fprintf(f, "\n\n");
 }
+#endif
 
 void nios2_tcg_init(void)
 {

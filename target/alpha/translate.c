@@ -3026,6 +3026,7 @@ void restore_state_to_opc(CPUAlphaState *env, TranslationBlock *tb,
     env->pc = data[0];
 }
 
+#ifndef CONFIG_LIBTCG
 void alpha_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                           int flags)
 {
@@ -3059,3 +3060,4 @@ void alpha_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
     }
     cpu_fprintf(f, "\n");
 }
+#endif

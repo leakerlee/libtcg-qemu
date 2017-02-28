@@ -2036,6 +2036,7 @@ done_generating:
     tb->icount = num_insns;
 }
 
+#ifndef CONFIG_LIBTCG
 static const char *cpu_mode_names[16] = {
     "USER", "REAL", "INTR", "PRIV", "UM14", "UM15", "UM16", "TRAP",
     "UM18", "UM19", "UM1A", "EXTN", "UM1C", "UM1D", "UM1E", "SUSR"
@@ -2103,6 +2104,7 @@ void uc32_cpu_dump_state(CPUState *cs, FILE *f,
 
     cpu_dump_state_ucf64(env, f, cpu_fprintf, flags);
 }
+#endif
 
 void restore_state_to_opc(CPUUniCore32State *env, TranslationBlock *tb,
                           target_ulong *data)

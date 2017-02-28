@@ -1,1 +1,5 @@
-obj-y += cpu.o translate.o helper.o simd_helper.o
+obj-y += translate.o cpu.o
+
+ifndef CONFIG_LIBTCG
+obj-y += helper.o simd_helper.o
+endif

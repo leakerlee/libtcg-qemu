@@ -258,7 +258,6 @@ static const M68kCPUInfo m68k_cpus[] = {
 static void m68k_cpu_realizefn(DeviceState *dev, Error **errp)
 {
     CPUState *cs = CPU(dev);
-    M68kCPU *cpu = M68K_CPU(dev);
     M68kCPUClass *mcc = M68K_CPU_GET_CLASS(dev);
     Error *local_err = NULL;
 
@@ -268,7 +267,10 @@ static void m68k_cpu_realizefn(DeviceState *dev, Error **errp)
         return;
     }
 
+#ifndef CONFIG_LIBTCG
+    M68kCPU *cpu = M68K_CPU(dev);
     m68k_cpu_init_gdb(cpu);
+#endif
 
     cpu_reset(cs);
     qemu_init_vcpu(cs);
@@ -330,16 +332,20 @@ static void m68k_cpu_class_init(ObjectClass *c, void *data)
 
     cc->class_by_name = m68k_cpu_class_by_name;
     cc->has_work = m68k_cpu_has_work;
+    cc->set_pc = m68k_cpu_set_pc;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = m68k_cpu_dump_state;
     cc->do_interrupt = m68k_cpu_do_interrupt;
     cc->cpu_exec_interrupt = m68k_cpu_exec_interrupt;
-    cc->dump_state = m68k_cpu_dump_state;
-    cc->set_pc = m68k_cpu_set_pc;
     cc->gdb_read_register = m68k_cpu_gdb_read_register;
     cc->gdb_write_register = m68k_cpu_gdb_write_register;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = m68k_cpu_handle_mmu_fault;
 #else
     cc->get_phys_page_debug = m68k_cpu_get_phys_page_debug;
+#endif
+
 #endif
     cc->disas_set_info = m68k_cpu_disas_set_info;
 

@@ -843,7 +843,7 @@ bool tcg_enabled(void)
  *
  * Called with tb_lock held.
  */
-static TranslationBlock *tb_alloc(target_ulong pc)
+TranslationBlock *tb_alloc(target_ulong pc)
 {
     TranslationBlock *tb;
 

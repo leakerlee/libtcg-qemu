@@ -16,6 +16,7 @@
 #define PMCRE   0x1
 #endif
 
+#ifndef CONFIG_LIBTCG
 static int vfp_gdb_get_reg(CPUARMState *env, uint8_t *buf, int reg)
 {
     int nregs;
@@ -109,6 +110,7 @@ static int aarch64_fpu_gdb_set_reg(CPUARMState *env, uint8_t *buf, int reg)
         return 0;
     }
 }
+#endif
 
 static uint64_t raw_read(CPUARMState *env, const ARMCPRegInfo *ri)
 {
@@ -169,6 +171,7 @@ static void write_raw_cp_reg(CPUARMState *env, const ARMCPRegInfo *ri,
     }
 }
 
+#ifndef CONFIG_LIBTCG
 static bool raw_accessors_invalid(const ARMCPRegInfo *ri)
 {
    /* Return true if the regdef would cause an assertion if you called
@@ -189,6 +192,7 @@ static bool raw_accessors_invalid(const ARMCPRegInfo *ri)
     }
     return true;
 }
+#endif
 
 bool write_cpustate_to_list(ARMCPU *cpu)
 {
@@ -5225,6 +5229,7 @@ ARMCPU *cpu_arm_init(const char *cpu_model)
     return ARM_CPU(cpu_generic_init(TYPE_ARM_CPU, cpu_model));
 }
 
+#ifndef CONFIG_LIBTCG
 void arm_cpu_register_gdb_regs_for_features(ARMCPU *cpu)
 {
     CPUState *cs = CPU(cpu);
@@ -5245,6 +5250,7 @@ void arm_cpu_register_gdb_regs_for_features(ARMCPU *cpu)
                                  19, "arm-vfp.xml", 0);
     }
 }
+#endif
 
 /* Sort alphabetically by type name, except for "any". */
 static gint arm_cpu_list_compare(gconstpointer a, gconstpointer b)
@@ -5437,6 +5443,7 @@ static void add_cpreg_to_hashtable(ARMCPU *cpu, const ARMCPRegInfo *r,
         r2->type |= ARM_CP_ALIAS;
     }
 
+#ifndef CONFIG_LIBTCG
     /* Check that raw accesses are either forbidden or handled. Note that
      * we can't assert this earlier because the setup of fieldoffset for
      * banked registers has to be done first.
@@ -5444,6 +5451,7 @@ static void add_cpreg_to_hashtable(ARMCPU *cpu, const ARMCPRegInfo *r,
     if (!(r2->type & ARM_CP_NO_RAW)) {
         assert(!raw_accessors_invalid(r2));
     }
+#endif
 
     /* Overriding of an existing definition must be explicitly
      * requested.
@@ -5545,6 +5553,7 @@ void define_one_arm_cp_reg_with_opaque(ARMCPU *cpu,
         assert((r->access & ~mask) == 0);
     }
 
+#ifndef CONFIG_LIBTCG
     /* Check that the register definition has enough info to handle
      * reads and writes if they are permitted.
      */
@@ -5560,6 +5569,7 @@ void define_one_arm_cp_reg_with_opaque(ARMCPU *cpu,
                    r->writefn);
         }
     }
+#endif
     /* Bad type field probably means missing sentinel at end of reg list */
     assert(cptype_valid(r->type));
     for (crm = crmmin; crm <= crmmax; crm++) {
@@ -5629,6 +5639,7 @@ void arm_cp_reset_ignore(CPUARMState *env, const ARMCPRegInfo *opaque)
     /* Helper coprocessor reset function for do-nothing-on-reset registers */
 }
 
+#ifndef CONFIG_LIBTCG
 static int bad_mode_switch(CPUARMState *env, int mode, CPSRWriteType write_type)
 {
     /* Return true if it is not valid for us to switch to
@@ -5800,3 +5811,4 @@ void cpsr_write(CPUARMState *env, uint32_t val, uint32_t mask,
     mask &= ~CACHED_CPSR_BITS;
     env->uncached_cpsr = (env->uncached_cpsr & ~mask) | (val & mask);
 }
+#endif

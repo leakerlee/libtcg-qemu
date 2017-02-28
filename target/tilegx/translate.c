@@ -26,7 +26,15 @@
 #include "exec/exec-all.h"
 #include "tcg-op.h"
 #include "exec/cpu_ldst.h"
-#include "linux-user/syscall_defs.h"
+
+#ifdef CONFIG_LIBTCG
+# define TARGET_SIGTRAP 0
+# define TARGET_TRAP_BRKPT 0
+# define TARGET_SIGILL 0
+# define TARGET_ILL_ILLOPC 0
+#else
+# include "linux-user/syscall_defs.h"
+#endif
 
 #include "opcode_tilegx.h"
 #include "spr_def_64.h"
@@ -2456,6 +2464,7 @@ void tilegx_tcg_init(void)
     }
 }
 
+#ifndef CONFIG_LIBTCG
 void tilegx_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                            int flags)
 {
@@ -2481,3 +2490,4 @@ void tilegx_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
     cpu_fprintf(f, "PC  " TARGET_FMT_lx " CEX " TARGET_FMT_lx "\n\n",
                 env->pc, env->spregs[TILEGX_SPR_CMPEXCH]);
 }
+#endif

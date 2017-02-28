@@ -8,6 +8,8 @@ SYSEMU_TARGET_LIST := $(subst -softmmu.mak,,$(notdir \
 
 check-unit-y = tests/check-qdict$(EXESUF)
 gcov-files-check-qdict-y = qobject/qdict.c
+check-unit-y += tests/test-libtcg$(EXESUF)
+gcov-files-test-libtcg-y = libtcg/tcg.c
 check-unit-y += tests/test-char$(EXESUF)
 gcov-files-check-qdict-y = chardev/char.c
 check-unit-y += tests/check-qfloat$(EXESUF)
@@ -495,7 +497,9 @@ test-obj-y = tests/check-qint.o tests/check-qstring.o tests/check-qdict.o \
 	tests/rcutorture.o tests/test-rcu-list.o \
 	tests/test-qdist.o tests/test-shift128.o \
 	tests/test-qht.o tests/qht-bench.o tests/test-qht-par.o \
-	tests/atomic_add-bench.o
+	tests/atomic_add-bench.o tests/test-libtcg.o
+
+tests/test-libtcg: QEMU_CFLAGS += -ldl
 
 $(test-obj-y): QEMU_INCLUDES += -Itests
 QEMU_CFLAGS += -I$(SRC_PATH)/tests
@@ -514,6 +518,7 @@ test-block-obj-y = $(block-obj-y) $(test-io-obj-y) tests/iothread.o
 tests/check-qint$(EXESUF): tests/check-qint.o $(test-util-obj-y)
 tests/check-qstring$(EXESUF): tests/check-qstring.o $(test-util-obj-y)
 tests/check-qdict$(EXESUF): tests/check-qdict.o $(test-util-obj-y)
+tests/check-libtcg$(EXESUF): tests/check-libtcg.o $(test-util-obj-y)
 tests/check-qlist$(EXESUF): tests/check-qlist.o $(test-util-obj-y)
 tests/check-qfloat$(EXESUF): tests/check-qfloat.o $(test-util-obj-y)
 tests/check-qnull$(EXESUF): tests/check-qnull.o $(test-util-obj-y)

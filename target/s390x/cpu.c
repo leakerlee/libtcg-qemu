@@ -214,7 +214,9 @@ static void s390_cpu_realizefn(DeviceState *dev, Error **errp)
     qemu_register_reset(s390_cpu_machine_reset_cb, cpu);
 #endif
     env->cpu_num = cpu->id;
+#ifndef CONFIG_LIBTCG
     s390_cpu_gdb_init(cs);
+#endif
     qemu_init_vcpu(cs);
 #if !defined(CONFIG_USER_ONLY)
     run_on_cpu(cs, s390_do_cpu_full_reset, RUN_ON_CPU_NULL);
@@ -417,11 +419,13 @@ static void s390_cpu_class_init(ObjectClass *oc, void *data)
     cc->reset = s390_cpu_full_reset;
     cc->class_by_name = s390_cpu_class_by_name,
     cc->has_work = s390_cpu_has_work;
+    cc->set_pc = s390_cpu_set_pc;
+#ifndef CONFIG_LIBTCG
     cc->do_interrupt = s390_cpu_do_interrupt;
     cc->dump_state = s390_cpu_dump_state;
-    cc->set_pc = s390_cpu_set_pc;
     cc->gdb_read_register = s390_cpu_gdb_read_register;
     cc->gdb_write_register = s390_cpu_gdb_write_register;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = s390_cpu_handle_mmu_fault;
 #else
@@ -430,6 +434,8 @@ static void s390_cpu_class_init(ObjectClass *oc, void *data)
     cc->write_elf64_note = s390_cpu_write_elf64_note;
     cc->cpu_exec_interrupt = s390_cpu_exec_interrupt;
     cc->debug_excp_handler = s390x_cpu_debug_excp_handler;
+#endif
+
 #endif
     cc->disas_set_info = s390_cpu_disas_set_info;
 

@@ -6863,6 +6863,7 @@ GEN_HANDLER2_E(trechkpt, "trechkpt", 0x1F, 0x0E, 0x1F, 0x03FFF800, \
 #include "helper_regs.h"
 #include "translate_init.c"
 
+#ifndef CONFIG_LIBTCG
 /*****************************************************************************/
 /* Misc PowerPC helpers */
 void ppc_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
@@ -7032,6 +7033,7 @@ void ppc_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
 #undef RGPL
 #undef RFPL
 }
+#endif
 
 void ppc_cpu_dump_statistics(CPUState *cs, FILE*f,
                              fprintf_function cpu_fprintf, int flags)

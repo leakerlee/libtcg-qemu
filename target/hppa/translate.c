@@ -3938,6 +3938,7 @@ void restore_state_to_opc(CPUHPPAState *env, TranslationBlock *tb,
     env->psw_n = 0;
 }
 
+#ifndef CONFIG_LIBTCG
 void hppa_cpu_dump_state(CPUState *cs, FILE *f,
                          fprintf_function cpu_fprintf, int flags)
 {
@@ -3962,3 +3963,4 @@ void hppa_cpu_dump_state(CPUState *cs, FILE *f,
 
     /* ??? FR */
 }
+#endif

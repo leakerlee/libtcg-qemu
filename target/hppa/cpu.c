@@ -107,7 +107,9 @@ static void hppa_cpu_initfn(Object *obj)
     CPUHPPAState *env = &cpu->env;
 
     cs->env_ptr = env;
+#ifndef CONFIG_LIBTCG
     cpu_hppa_loaded_fr0(env);
+#endif
     set_snan_bit_is_one(true, &env->fp_status);
 
     hppa_translate_init();
@@ -133,14 +135,16 @@ static void hppa_cpu_class_init(ObjectClass *oc, void *data)
     acc->parent_realize = dc->realize;
     dc->realize = hppa_cpu_realizefn;
 
+#ifndef CONFIG_LIBTCG
     cc->do_interrupt = hppa_cpu_do_interrupt;
     cc->cpu_exec_interrupt = hppa_cpu_exec_interrupt;
     cc->dump_state = hppa_cpu_dump_state;
-    cc->set_pc = hppa_cpu_set_pc;
-    cc->synchronize_from_tb = hppa_cpu_synchronize_from_tb;
+    cc->handle_mmu_fault = hppa_cpu_handle_mmu_fault;
     cc->gdb_read_register = hppa_cpu_gdb_read_register;
     cc->gdb_write_register = hppa_cpu_gdb_write_register;
-    cc->handle_mmu_fault = hppa_cpu_handle_mmu_fault;
+#endif
+    cc->set_pc = hppa_cpu_set_pc;
+    cc->synchronize_from_tb = hppa_cpu_synchronize_from_tb;
     cc->disas_set_info = hppa_cpu_disas_set_info;
 
     cc->gdb_num_core_regs = 128;

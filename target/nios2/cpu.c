@@ -110,6 +110,7 @@ static void nios2_cpu_realizefn(DeviceState *dev, Error **errp)
     ncc->parent_realize(dev, errp);
 }
 
+#ifndef CONFIG_LIBTCG
 static bool nios2_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 {
     Nios2CPU *cpu = NIOS2_CPU(cs);
@@ -123,6 +124,7 @@ static bool nios2_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
     }
     return false;
 }
+#endif
 
 
 static void nios2_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
@@ -136,6 +138,7 @@ static void nios2_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
 #endif
 }
 
+#ifndef CONFIG_LIBTCG
 static int nios2_cpu_gdb_read_register(CPUState *cs, uint8_t *mem_buf, int n)
 {
     Nios2CPU *cpu = NIOS2_CPU(cs);
@@ -178,6 +181,7 @@ static int nios2_cpu_gdb_write_register(CPUState *cs, uint8_t *mem_buf, int n)
 
     return 4;
 }
+#endif
 
 static Property nios2_properties[] = {
     DEFINE_PROP_BOOL("mmu_present", Nios2CPU, mmu_present, true),
@@ -204,19 +208,22 @@ static void nios2_cpu_class_init(ObjectClass *oc, void *data)
     cc->reset = nios2_cpu_reset;
 
     cc->has_work = nios2_cpu_has_work;
-    cc->do_interrupt = nios2_cpu_do_interrupt;
-    cc->cpu_exec_interrupt = nios2_cpu_exec_interrupt;
-    cc->dump_state = nios2_cpu_dump_state;
     cc->set_pc = nios2_cpu_set_pc;
     cc->disas_set_info = nios2_cpu_disas_set_info;
+#ifndef CONFIG_LIBTCG
+    cc->do_interrupt = nios2_cpu_do_interrupt;
+    cc->cpu_exec_interrupt = nios2_cpu_exec_interrupt;
+    cc->gdb_read_register = nios2_cpu_gdb_read_register;
+    cc->gdb_write_register = nios2_cpu_gdb_write_register;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = nios2_cpu_handle_mmu_fault;
 #else
     cc->do_unaligned_access = nios2_cpu_do_unaligned_access;
     cc->get_phys_page_debug = nios2_cpu_get_phys_page_debug;
 #endif
-    cc->gdb_read_register = nios2_cpu_gdb_read_register;
-    cc->gdb_write_register = nios2_cpu_gdb_write_register;
+
+#endif
     cc->gdb_num_core_regs = 49;
 }
 

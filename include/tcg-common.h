@@ -71,11 +71,14 @@ typedef enum PREFIX(Type) {
 #endif
 
     /* An alias for the size of the target "long", aka register.  */
+#ifdef TARGET_LONG_BITS
 #if TARGET_LONG_BITS == 64
     PREFIX2(TYPE_TL) = PREFIX2(TYPE_I64),
 #else
     PREFIX2(TYPE_TL) = PREFIX2(TYPE_I32),
 #endif
+#endif
+
 #endif
 } PREFIX(Type);
 

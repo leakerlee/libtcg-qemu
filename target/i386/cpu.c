@@ -2806,7 +2806,9 @@ static void x86_cpu_reset(CPUState *s)
 
     env->hflags2 |= HF2_GIF_MASK;
 
+#ifndef CONFIG_LIBTCG
     cpu_x86_update_cr0(env, 0x60000010);
+#endif
     env->a20_mask = ~0x0;
     env->smbase = 0x30000;
 
@@ -2845,7 +2847,9 @@ static void x86_cpu_reset(CPUState *s)
     for (i = 0; i < 8; i++) {
         env->fptags[i] = 1;
     }
+#ifndef CONFIG_LIBTCG
     cpu_set_fpuc(env, 0x37f);
+#endif
 
     env->mxcsr = 0x1f80;
     /* All units are in INIT state.  */
@@ -2884,7 +2888,9 @@ static void x86_cpu_reset(CPUState *s)
 #endif
 
     env->xcr0 = xcr0;
+#ifndef CONFIG_LIBTCG
     cpu_x86_update_cr4(env, cr4);
+#endif
 
     /*
      * SDM 11.11.5 requires:
@@ -3730,16 +3736,20 @@ static void x86_cpu_common_class_init(ObjectClass *oc, void *data)
     cc->class_by_name = x86_cpu_class_by_name;
     cc->parse_features = x86_cpu_parse_featurestr;
     cc->has_work = x86_cpu_has_work;
-    cc->do_interrupt = x86_cpu_do_interrupt;
-    cc->cpu_exec_interrupt = x86_cpu_exec_interrupt;
-    cc->dump_state = x86_cpu_dump_state;
     cc->get_crash_info = x86_cpu_get_crash_info;
     cc->set_pc = x86_cpu_set_pc;
     cc->synchronize_from_tb = x86_cpu_synchronize_from_tb;
-    cc->gdb_read_register = x86_cpu_gdb_read_register;
-    cc->gdb_write_register = x86_cpu_gdb_write_register;
     cc->get_arch_id = x86_cpu_get_arch_id;
     cc->get_paging_enabled = x86_cpu_get_paging_enabled;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = x86_cpu_dump_state;
+    cc->do_interrupt = x86_cpu_do_interrupt;
+    cc->cpu_exec_interrupt = x86_cpu_exec_interrupt;
+    cc->gdb_read_register = x86_cpu_gdb_read_register;
+    cc->gdb_write_register = x86_cpu_gdb_write_register;
+    cc->cpu_exec_enter = x86_cpu_exec_enter;
+    cc->cpu_exec_exit = x86_cpu_exec_exit;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = x86_cpu_handle_mmu_fault;
 #else
@@ -3751,6 +3761,8 @@ static void x86_cpu_common_class_init(ObjectClass *oc, void *data)
     cc->write_elf32_qemunote = x86_cpu_write_elf32_qemunote;
     cc->vmsd = &vmstate_x86_cpu;
 #endif
+
+#endif
     /* CPU_NB_REGS * 2 = general regs + xmm regs
      * 25 = eip, eflags, 6 seg regs, st[0-7], fctrl,...,fop, mxcsr.
      */
@@ -3758,8 +3770,6 @@ static void x86_cpu_common_class_init(ObjectClass *oc, void *data)
 #ifndef CONFIG_USER_ONLY
     cc->debug_excp_handler = breakpoint_handler;
 #endif
-    cc->cpu_exec_enter = x86_cpu_exec_enter;
-    cc->cpu_exec_exit = x86_cpu_exec_exit;
 
     dc->cannot_instantiate_with_device_add_yet = false;
 }

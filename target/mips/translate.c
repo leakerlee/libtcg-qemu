@@ -20071,6 +20071,7 @@ done_generating:
 #endif
 }
 
+#ifndef CONFIG_LIBTCG
 static void fpu_dump_state(CPUMIPSState *env, FILE *f, fprintf_function fpu_fprintf,
                            int flags)
 {
@@ -20143,6 +20144,7 @@ void mips_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
     if (env->hflags & MIPS_HFLAG_FPU)
         fpu_dump_state(env, f, cpu_fprintf, flags);
 }
+#endif
 
 void mips_tcg_init(void)
 {

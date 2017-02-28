@@ -3256,6 +3256,7 @@ done:
     tb->icount = insn_count;
 }
 
+#ifndef CONFIG_LIBTCG
 void xtensa_cpu_dump_state(CPUState *cs, FILE *f,
                            fprintf_function cpu_fprintf, int flags)
 {
@@ -3306,6 +3307,7 @@ void xtensa_cpu_dump_state(CPUState *cs, FILE *f,
         }
     }
 }
+#endif
 
 void restore_state_to_opc(CPUXtensaState *env, TranslationBlock *tb,
                           target_ulong *data)
