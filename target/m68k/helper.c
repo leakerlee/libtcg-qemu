@@ -100,26 +100,6 @@ static int fpu_gdb_set_reg(CPUM68KState *env, uint8_t *mem_buf, int n)
     return 0;
 }
 
-M68kCPU *cpu_m68k_init(const char *cpu_model)
-{
-    M68kCPU *cpu;
-    CPUM68KState *env;
-    ObjectClass *oc;
-
-    oc = cpu_class_by_name(TYPE_M68K_CPU, cpu_model);
-    if (oc == NULL) {
-        return NULL;
-    }
-    cpu = M68K_CPU(object_new(object_class_get_name(oc)));
-    env = &cpu->env;
-
-    register_m68k_insns(env);
-
-    object_property_set_bool(OBJECT(cpu), true, "realized", NULL);
-
-    return cpu;
-}
-
 void m68k_cpu_init_gdb(M68kCPU *cpu)
 {
     CPUState *cs = CPU(cpu);
@@ -186,17 +166,6 @@ void HELPER(set_macsr)(CPUM68KState *env, uint32_t val)
         }
     }
     env->macsr = val;
-}
-
-void m68k_switch_sp(CPUM68KState *env)
-{
-    int new_sp;
-
-    env->sp[env->current_sp] = env->aregs[7];
-    new_sp = (env->sr & SR_S && env->cacr & M68K_CACR_EUSP)
-             ? M68K_SSP : M68K_USP;
-    env->aregs[7] = env->sp[new_sp];
-    env->current_sp = new_sp;
 }
 
 #if defined(CONFIG_USER_ONLY)
@@ -532,88 +501,9 @@ void HELPER(mac_set_flags)(CPUM68KState *env, uint32_t acc)
     }
 }
 
-#define EXTSIGN(val, index) (     \
-    (index == 0) ? (int8_t)(val) : ((index == 1) ? (int16_t)(val) : (val)) \
-)
-
-#define COMPUTE_CCR(op, x, n, z, v, c) {                                   \
-    switch (op) {                                                          \
-    case CC_OP_FLAGS:                                                      \
-        /* Everything in place.  */                                        \
-        break;                                                             \
-    case CC_OP_ADDB:                                                       \
-    case CC_OP_ADDW:                                                       \
-    case CC_OP_ADDL:                                                       \
-        res = n;                                                           \
-        src2 = v;                                                          \
-        src1 = EXTSIGN(res - src2, op - CC_OP_ADDB);                       \
-        c = x;                                                             \
-        z = n;                                                             \
-        v = (res ^ src1) & ~(src1 ^ src2);                                 \
-        break;                                                             \
-    case CC_OP_SUBB:                                                       \
-    case CC_OP_SUBW:                                                       \
-    case CC_OP_SUBL:                                                       \
-        res = n;                                                           \
-        src2 = v;                                                          \
-        src1 = EXTSIGN(res + src2, op - CC_OP_SUBB);                       \
-        c = x;                                                             \
-        z = n;                                                             \
-        v = (res ^ src1) & (src1 ^ src2);                                  \
-        break;                                                             \
-    case CC_OP_CMPB:                                                       \
-    case CC_OP_CMPW:                                                       \
-    case CC_OP_CMPL:                                                       \
-        src1 = n;                                                          \
-        src2 = v;                                                          \
-        res = EXTSIGN(src1 - src2, op - CC_OP_CMPB);                       \
-        n = res;                                                           \
-        z = res;                                                           \
-        c = src1 < src2;                                                   \
-        v = (res ^ src1) & (src1 ^ src2);                                  \
-        break;                                                             \
-    case CC_OP_LOGIC:                                                      \
-        c = v = 0;                                                         \
-        z = n;                                                             \
-        break;                                                             \
-    default:                                                               \
-        cpu_abort(CPU(m68k_env_get_cpu(env)), "Bad CC_OP %d", op);         \
-    }                                                                      \
-} while (0)
-
-uint32_t cpu_m68k_get_ccr(CPUM68KState *env)
-{
-    uint32_t x, c, n, z, v;
-    uint32_t res, src1, src2;
-
-    x = env->cc_x;
-    n = env->cc_n;
-    z = env->cc_z;
-    v = env->cc_v;
-    c = env->cc_c;
-
-    COMPUTE_CCR(env->cc_op, x, n, z, v, c);
-
-    n = n >> 31;
-    z = (z == 0);
-    v = v >> 31;
-
-    return x * CCF_X + n * CCF_N + z * CCF_Z + v * CCF_V + c * CCF_C;
-}
-
 uint32_t HELPER(get_ccr)(CPUM68KState *env)
 {
     return cpu_m68k_get_ccr(env);
-}
-
-void cpu_m68k_set_ccr(CPUM68KState *env, uint32_t ccr)
-{
-    env->cc_x = (ccr & CCF_X ? 1 : 0);
-    env->cc_n = (ccr & CCF_N ? -1 : 0);
-    env->cc_z = (ccr & CCF_Z ? 0 : 1);
-    env->cc_v = (ccr & CCF_V ? -1 : 0);
-    env->cc_c = (ccr & CCF_C ? 1 : 0);
-    env->cc_op = CC_OP_FLAGS;
 }
 
 void HELPER(set_ccr)(CPUM68KState *env, uint32_t ccr)

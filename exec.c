@@ -665,9 +665,10 @@ AddressSpace *cpu_get_address_space(CPUState *cpu, int asidx)
 
 void cpu_exec_unrealizefn(CPUState *cpu)
 {
-    CPUClass *cc = CPU_GET_CLASS(cpu);
-
     cpu_list_remove(cpu);
+
+#ifndef CONFIG_USER_ONLY
+    CPUClass *cc = CPU_GET_CLASS(cpu);
 
     if (cc->vmsd != NULL) {
         vmstate_unregister(NULL, cc->vmsd, cpu);
@@ -675,6 +676,7 @@ void cpu_exec_unrealizefn(CPUState *cpu)
     if (qdev_get_vmsd(DEVICE(cpu)) == NULL) {
         vmstate_unregister(NULL, &vmstate_cpu_common, cpu);
     }
+#endif
 }
 
 void cpu_exec_initfn(CPUState *cpu)

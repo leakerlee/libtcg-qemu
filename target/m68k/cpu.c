@@ -43,6 +43,47 @@ static void m68k_set_feature(CPUM68KState *env, int feature)
     env->features |= (1u << feature);
 }
 
+void m68k_switch_sp(CPUM68KState *env)
+{
+    int new_sp;
+
+    env->sp[env->current_sp] = env->aregs[7];
+    new_sp = (env->sr & SR_S && env->cacr & M68K_CACR_EUSP)
+             ? M68K_SSP : M68K_USP;
+    env->aregs[7] = env->sp[new_sp];
+    env->current_sp = new_sp;
+}
+
+void cpu_m68k_set_ccr(CPUM68KState *env, uint32_t ccr)
+{
+    env->cc_x = (ccr & CCF_X ? 1 : 0);
+    env->cc_n = (ccr & CCF_N ? -1 : 0);
+    env->cc_z = (ccr & CCF_Z ? 0 : 1);
+    env->cc_v = (ccr & CCF_V ? -1 : 0);
+    env->cc_c = (ccr & CCF_C ? 1 : 0);
+    env->cc_op = CC_OP_FLAGS;
+}
+
+uint32_t cpu_m68k_get_ccr(CPUM68KState *env)
+{
+    uint32_t x, c, n, z, v;
+    uint32_t res, src1, src2;
+
+    x = env->cc_x;
+    n = env->cc_n;
+    z = env->cc_z;
+    v = env->cc_v;
+    c = env->cc_c;
+
+    COMPUTE_CCR(env->cc_op, x, n, z, v, c);
+
+    n = n >> 31;
+    z = (z == 0);
+    v = v >> 31;
+
+    return x * CCF_X + n * CCF_N + z * CCF_Z + v * CCF_V + c * CCF_C;
+}
+
 /* CPUClass::reset() */
 static void m68k_cpu_reset(CPUState *s)
 {
@@ -248,6 +289,26 @@ static void m68k_cpu_initfn(Object *obj)
         inited = true;
         m68k_tcg_init();
     }
+}
+
+M68kCPU *cpu_m68k_init(const char *cpu_model)
+{
+    M68kCPU *cpu;
+    CPUM68KState *env;
+    ObjectClass *oc;
+
+    oc = cpu_class_by_name(TYPE_M68K_CPU, cpu_model);
+    if (oc == NULL) {
+        return NULL;
+    }
+    cpu = M68K_CPU(object_new(object_class_get_name(oc)));
+    env = &cpu->env;
+
+    register_m68k_insns(env);
+
+    object_property_set_bool(OBJECT(cpu), true, "realized", NULL);
+
+    return cpu;
 }
 
 static const VMStateDescription vmstate_m68k_cpu = {

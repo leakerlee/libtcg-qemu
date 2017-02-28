@@ -3007,6 +3007,34 @@ static int handle_vminmaxnm(uint32_t insn, uint32_t rd, uint32_t rn,
     return 0;
 }
 
+/* Convert ARM rounding mode to softfloat */
+int arm_rmode_to_sf(int rmode)
+{
+    switch (rmode) {
+    case FPROUNDING_TIEAWAY:
+        rmode = float_round_ties_away;
+        break;
+    case FPROUNDING_ODD:
+        /* FIXME: add support for TIEAWAY and ODD */
+        qemu_log_mask(LOG_UNIMP, "arm: unimplemented rounding mode: %d\n",
+                      rmode);
+    case FPROUNDING_TIEEVEN:
+    default:
+        rmode = float_round_nearest_even;
+        break;
+    case FPROUNDING_POSINF:
+        rmode = float_round_up;
+        break;
+    case FPROUNDING_NEGINF:
+        rmode = float_round_down;
+        break;
+    case FPROUNDING_ZERO:
+        rmode = float_round_to_zero;
+        break;
+    }
+    return rmode;
+}
+
 static int handle_vrint(uint32_t insn, uint32_t rd, uint32_t rm, uint32_t dp,
                         int rounding)
 {
@@ -7433,6 +7461,11 @@ static int disas_neon_data_insn(DisasContext *s, uint32_t insn)
         }
     }
     return 0;
+}
+
+const ARMCPRegInfo *get_arm_cp_reginfo(GHashTable *cpregs, uint32_t encoded_cp)
+{
+    return g_hash_table_lookup(cpregs, &encoded_cp);
 }
 
 static int disas_coproc_insn(DisasContext *s, uint32_t insn)

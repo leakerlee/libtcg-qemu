@@ -24,48 +24,9 @@
 #include "fpu/softfloat.h"
 #include "exec/helper-proto.h"
 
-
-#define CONVERT_BIT(X, SRC, DST) \
-    (SRC > DST ? (X) / (SRC / DST) & (DST) : ((X) & SRC) * (DST / SRC))
-
 uint64_t cpu_alpha_load_fpcr (CPUAlphaState *env)
 {
     return (uint64_t)env->fpcr << 32;
-}
-
-void cpu_alpha_store_fpcr (CPUAlphaState *env, uint64_t val)
-{
-    uint32_t fpcr = val >> 32;
-    uint32_t t = 0;
-
-    t |= CONVERT_BIT(fpcr, FPCR_INED, FPCR_INE);
-    t |= CONVERT_BIT(fpcr, FPCR_UNFD, FPCR_UNF);
-    t |= CONVERT_BIT(fpcr, FPCR_OVFD, FPCR_OVF);
-    t |= CONVERT_BIT(fpcr, FPCR_DZED, FPCR_DZE);
-    t |= CONVERT_BIT(fpcr, FPCR_INVD, FPCR_INV);
-
-    env->fpcr = fpcr;
-    env->fpcr_exc_enable = ~t & FPCR_STATUS_MASK;
-
-    switch (fpcr & FPCR_DYN_MASK) {
-    case FPCR_DYN_NORMAL:
-    default:
-        t = float_round_nearest_even;
-        break;
-    case FPCR_DYN_CHOPPED:
-        t = float_round_to_zero;
-        break;
-    case FPCR_DYN_MINUS:
-        t = float_round_down;
-        break;
-    case FPCR_DYN_PLUS:
-        t = float_round_up;
-        break;
-    }
-    env->fpcr_dyn_round = t;
-
-    env->fpcr_flush_to_zero = (fpcr & FPCR_UNFD) && (fpcr & FPCR_UNDZ);
-    env->fp_status.flush_inputs_to_zero = (fpcr & FPCR_DNZ) != 0;
 }
 
 uint64_t helper_load_fpcr(CPUAlphaState *env)

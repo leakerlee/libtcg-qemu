@@ -141,6 +141,11 @@ static void uc32_cpu_initfn(Object *obj)
     }
 }
 
+UniCore32CPU *uc32_cpu_init(const char *cpu_model)
+{
+    return UNICORE32_CPU(cpu_generic_init(TYPE_UNICORE32_CPU, cpu_model));
+}
+
 static const VMStateDescription vmstate_uc32_cpu = {
     .name = "cpu",
     .unmigratable = 1,

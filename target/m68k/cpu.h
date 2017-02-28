@@ -262,6 +262,55 @@ void m68k_cpu_list(FILE *f, fprintf_function cpu_fprintf);
 
 void register_m68k_insns (CPUM68KState *env);
 
+#define EXTSIGN(val, index) (     \
+    (index == 0) ? (int8_t)(val) : ((index == 1) ? (int16_t)(val) : (val)) \
+)
+
+#define COMPUTE_CCR(op, x, n, z, v, c) {                                   \
+    switch (op) {                                                          \
+    case CC_OP_FLAGS:                                                      \
+        /* Everything in place.  */                                        \
+        break;                                                             \
+    case CC_OP_ADDB:                                                       \
+    case CC_OP_ADDW:                                                       \
+    case CC_OP_ADDL:                                                       \
+        res = n;                                                           \
+        src2 = v;                                                          \
+        src1 = EXTSIGN(res - src2, op - CC_OP_ADDB);                       \
+        c = x;                                                             \
+        z = n;                                                             \
+        v = (res ^ src1) & ~(src1 ^ src2);                                 \
+        break;                                                             \
+    case CC_OP_SUBB:                                                       \
+    case CC_OP_SUBW:                                                       \
+    case CC_OP_SUBL:                                                       \
+        res = n;                                                           \
+        src2 = v;                                                          \
+        src1 = EXTSIGN(res + src2, op - CC_OP_SUBB);                       \
+        c = x;                                                             \
+        z = n;                                                             \
+        v = (res ^ src1) & (src1 ^ src2);                                  \
+        break;                                                             \
+    case CC_OP_CMPB:                                                       \
+    case CC_OP_CMPW:                                                       \
+    case CC_OP_CMPL:                                                       \
+        src1 = n;                                                          \
+        src2 = v;                                                          \
+        res = EXTSIGN(src1 - src2, op - CC_OP_CMPB);                       \
+        n = res;                                                           \
+        z = res;                                                           \
+        c = src1 < src2;                                                   \
+        v = (res ^ src1) & (src1 ^ src2);                                  \
+        break;                                                             \
+    case CC_OP_LOGIC:                                                      \
+        c = v = 0;                                                         \
+        z = n;                                                             \
+        break;                                                             \
+    default:                                                               \
+        cpu_abort(CPU(m68k_env_get_cpu(env)), "Bad CC_OP %d", op);         \
+    }                                                                      \
+} while (0)
+
 #ifdef CONFIG_USER_ONLY
 /* Coldfire Linux uses 8k pages
  * and m68k linux uses 4k pages
