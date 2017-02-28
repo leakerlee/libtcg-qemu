@@ -3937,3 +3937,28 @@ void restore_state_to_opc(CPUHPPAState *env, TranslationBlock *tb,
        that the instruction was not nullified.  */
     env->psw_n = 0;
 }
+
+void hppa_cpu_dump_state(CPUState *cs, FILE *f,
+                         fprintf_function cpu_fprintf, int flags)
+{
+    HPPACPU *cpu = HPPA_CPU(cs);
+    CPUHPPAState *env = &cpu->env;
+    int i;
+
+    cpu_fprintf(f, "IA_F " TARGET_FMT_lx
+                   " IA_B " TARGET_FMT_lx
+                   " PSW  " TARGET_FMT_lx
+                   " [N:" TARGET_FMT_ld " V:%d"
+                   " CB:" TARGET_FMT_lx "]\n              ",
+                env->iaoq_f, env->iaoq_b, cpu_hppa_get_psw(env),
+                env->psw_n, env->psw_v < 0,
+                ((env->psw_cb >> 4) & 0x01111111) | (env->psw_cb_msb << 28));
+    for (i = 1; i < 32; i++) {
+        cpu_fprintf(f, "GR%02d " TARGET_FMT_lx " ", i, env->gr[i]);
+        if ((i % 4) == 3) {
+            cpu_fprintf(f, "\n");
+        }
+    }
+
+    /* ??? FR */
+}

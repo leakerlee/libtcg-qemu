@@ -418,40 +418,6 @@ bool alpha_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
     return false;
 }
 
-void alpha_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
-                          int flags)
-{
-    static const char *linux_reg_names[] = {
-        "v0 ", "t0 ", "t1 ", "t2 ", "t3 ", "t4 ", "t5 ", "t6 ",
-        "t7 ", "s0 ", "s1 ", "s2 ", "s3 ", "s4 ", "s5 ", "fp ",
-        "a0 ", "a1 ", "a2 ", "a3 ", "a4 ", "a5 ", "t8 ", "t9 ",
-        "t10", "t11", "ra ", "t12", "at ", "gp ", "sp ", "zero",
-    };
-    AlphaCPU *cpu = ALPHA_CPU(cs);
-    CPUAlphaState *env = &cpu->env;
-    int i;
-
-    cpu_fprintf(f, "     PC  " TARGET_FMT_lx "      PS  %02x\n",
-                env->pc, env->ps);
-    for (i = 0; i < 31; i++) {
-        cpu_fprintf(f, "IR%02d %s " TARGET_FMT_lx " ", i,
-                    linux_reg_names[i], cpu_alpha_load_gr(env, i));
-        if ((i % 3) == 2)
-            cpu_fprintf(f, "\n");
-    }
-
-    cpu_fprintf(f, "lock_a   " TARGET_FMT_lx " lock_v   " TARGET_FMT_lx "\n",
-                env->lock_addr, env->lock_value);
-
-    for (i = 0; i < 31; i++) {
-        cpu_fprintf(f, "FIR%02d    " TARGET_FMT_lx " ", i,
-                    *((uint64_t *)(&env->fir[i])));
-        if ((i % 3) == 2)
-            cpu_fprintf(f, "\n");
-    }
-    cpu_fprintf(f, "\n");
-}
-
 /* This should only be called from translate, via gen_excp.
    We expect that ENV->PC has already been updated.  */
 void QEMU_NORETURN helper_excp(CPUAlphaState *env, int excp, int error)
