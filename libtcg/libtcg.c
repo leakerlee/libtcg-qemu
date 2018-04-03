@@ -45,6 +45,10 @@ static void libtcg_free_instructions(LibTCGInstructions *instructions);
 /* The interface object return by libtcg_init */
 static LibTCGInterface interface;
 
+
+#include "qapi/error.h"
+#include "qemu/error-report.h"
+
 /* This is the only function exposed by the library */
 __attribute__((visibility("default")))
 const LibTCGInterface *libtcg_init(const char *cpu_name,
@@ -52,6 +56,10 @@ const LibTCGInterface *libtcg_init(const char *cpu_name,
 {
     /* TODO: support changing CPU */
     assert(cpu == NULL);
+
+    qemu_set_log_filename("qemu.log", &error_fatal);
+    qemu_set_log(0xff);
+
 
     /* Initialize guest_base. Since libtcg only translates buffers of code, and
      * doesn't have the full view over the program being translated as
@@ -111,6 +119,8 @@ static TranslationBlock *do_gen_code(TCGContext *context, CPUState *cpu,
     /* Invoke the frontend-specific gen_intermediate_code function to perform
      * the actual translation to tiny code instructions */
     gen_intermediate_code(env, tb);
+
+    tcg_dump_ops(context);
 
     /* Return the TranslationBlock */
     return tb;
