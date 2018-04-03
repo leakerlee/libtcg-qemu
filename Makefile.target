@@ -164,7 +164,7 @@ QEMU_CFLAGS+=-I$(SRC_PATH)/libtcg
 
 obj-y += libtcg/
 
-LDFLAGS+=$(LDFLAGS_SHARED) -Wl,-soname,$(LIBTCG_SONAME)
+LDFLAGS+=$(LDFLAGS_SHARED) -Wl,--no-undefined,-soname,$(LIBTCG_SONAME)
 
 endif #CONFIG_LIBTCG
 
