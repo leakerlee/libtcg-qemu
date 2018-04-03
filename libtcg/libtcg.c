@@ -135,6 +135,17 @@ static LibTCGInstructions libtcg_translate(uint64_t virtual_address)
     uint32_t flags = 0;
     cpu_get_tb_cpu_state(cpu->env_ptr, &temp, &temp, &flags);
 
+#ifdef TARGET_X86_64
+    /* FIXME: This quick hack will force us to treat the input as 32-bit x86,
+     * as opposed to 16-bit real mode code. It should probably be done by
+     * setting up the CPU state properly.
+     */
+    flags |= 1 << HF_PE_SHIFT;
+    flags |= 1 << HF_CS32_SHIFT;
+    flags |= 1 << HF_SS32_SHIFT;
+    flags &= ~(1 << VM_SHIFT);
+#endif
+
     /* Perform the translation forcing the pc and with cs_base and cflags set to
      * 0 */
     TranslationBlock *tb = do_gen_code(context, cpu,
