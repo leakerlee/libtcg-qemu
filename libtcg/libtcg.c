@@ -154,7 +154,7 @@ static LibTCGInstructions libtcg_translate(uint64_t virtual_address)
                                        (target_ulong) virtual_address, 0, flags,
                                        0);
 
-    LibTCGInstructions result;
+    LibTCGInstructions result = {0};
     unsigned arguments_count = 0;
 
     /* First, count the instructions and the arguments, so we can allocate an
