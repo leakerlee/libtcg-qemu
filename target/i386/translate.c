@@ -8401,6 +8401,8 @@ void gen_intermediate_code(CPUX86State *env, TranslationBlock *tb)
         printf("ERROR addseg\n");
 #endif
 
+    dc->jmp_opt = 0; // Force direct block chaining off for simplicity
+
     cpu_T0 = tcg_temp_new();
     cpu_T1 = tcg_temp_new();
     cpu_A0 = tcg_temp_new();
