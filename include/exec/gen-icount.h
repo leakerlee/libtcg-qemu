@@ -13,6 +13,8 @@ static inline void gen_tb_start(TranslationBlock *tb)
 {
     TCGv_i32 count, flag, imm;
 
+    return;
+
     exitreq_label = gen_new_label();
     flag = tcg_temp_new_i32();
     tcg_gen_ld_i32(flag, cpu_env,
@@ -47,6 +49,7 @@ static inline void gen_tb_start(TranslationBlock *tb)
 
 static void gen_tb_end(TranslationBlock *tb, int num_insns)
 {
+#if 0
     gen_set_label(exitreq_label);
     tcg_gen_exit_tb((uintptr_t)tb + TB_EXIT_REQUESTED);
 
@@ -57,6 +60,7 @@ static void gen_tb_end(TranslationBlock *tb, int num_insns)
         gen_set_label(icount_label);
         tcg_gen_exit_tb((uintptr_t)tb + TB_EXIT_ICOUNT_EXPIRED);
     }
+#endif
 
     /* Terminate the linked list.  */
     tcg_ctx.gen_op_buf[tcg_ctx.gen_op_buf[0].prev].next = 0;
