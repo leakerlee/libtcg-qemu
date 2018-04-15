@@ -31,6 +31,7 @@
 #include "trace-tcg.h"
 #include "exec/log.h"
 
+#include "exec/helper-stub.h"
 
 #define PREFIX_REPZ   0x01
 #define PREFIX_REPNZ  0x02

@@ -23,7 +23,7 @@
 /* In libtcg we don't want helpers, therefore we leave these fields empty so
  * that we don't needlessly introduce a dependency towards the helper. */
 #ifdef CONFIG_LIBTCG
-# define HELPER_REF(helper) (NULL)
+# define HELPER_REF(name) (&glue(stub_, glue(helper_, name)))
 #else
 # define HELPER_REF(helper) (HELPER(helper))
 #endif
