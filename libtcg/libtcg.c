@@ -146,6 +146,10 @@ static LibTCGInstructions libtcg_translate(uint64_t virtual_address)
     flags |= 1 << HF_CS32_SHIFT;
     flags |= 1 << HF_SS32_SHIFT;
     flags &= ~(1 << VM_SHIFT);
+
+    /* Use long mode (64-bit) */
+    flags |= 1 << HF_LMA_SHIFT;  /* only used on x86_64: long mode active */
+    flags |= 1 << HF_CS64_SHIFT; /* only used on x86_64: 64 bit code segment  */
 #endif
 
     /* Perform the translation forcing the pc and with cs_base and cflags set to
