@@ -42,6 +42,7 @@ static address_pair libtcg_mmap(uint64_t start, uint64_t len, int prot,
 static LibTCGInstructions libtcg_translate(uint64_t virtual_address);
 static void libtcg_free_instructions(LibTCGInstructions *instructions);
 static LibTCGHelperInfo *libtcg_find_helper(uintptr_t val);
+static int libtcg_munmap(uint64_t start, uint64_t len);
 
 /* The interface object return by libtcg_init */
 static LibTCGInterface interface;
@@ -84,6 +85,7 @@ const LibTCGInterface *libtcg_init(const char *cpu_name,
     interface.translate = libtcg_translate;
     interface.free_instructions = libtcg_free_instructions;
     interface.find_helper = libtcg_find_helper;
+    interface.munmap = libtcg_munmap;
 
     /* Return a reference to the interface object */
     return &interface;
@@ -96,6 +98,11 @@ static address_pair libtcg_mmap(uint64_t start, uint64_t len, int prot,
     result.virtual_address = target_mmap(start, len, prot, flags, fd, offset);
     result.pointer = g2h(result.virtual_address);
     return result;
+}
+
+static int libtcg_munmap(uint64_t start, uint64_t len)
+{
+    return target_munmap(start, len);
 }
 
 static TranslationBlock *do_gen_code(TCGContext *context, CPUState *cpu,

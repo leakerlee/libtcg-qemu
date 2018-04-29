@@ -82,12 +82,14 @@ typedef LibTCGInstructions (*libtcg_translate_func)(uint64_t virtual_address);
 typedef void (*libtcg_free_instructions_func)(LibTCGInstructions *instructions);
 
 typedef LibTCGHelperInfo *(*libtcg_find_helper_func)(uintptr_t val);
+typedef int (*libtcg_munmap_func)(uint64_t start, uint64_t len);
 
 typedef struct {
     libtcg_mmap_func mmap;
     libtcg_translate_func translate;
     libtcg_free_instructions_func free_instructions;
     libtcg_find_helper_func find_helper;
+    libtcg_munmap_func munmap;
 } LibTCGInterface;
 
 /**
