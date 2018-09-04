@@ -176,4 +176,7 @@ static inline void cpu_get_tb_cpu_state(CPUTLGState *env, target_ulong *pc,
     *flags = 0;
 }
 
+void tilegx_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
+                           int flags);
+
 #endif

@@ -194,57 +194,67 @@ static void cris_cpu_initfn(Object *obj)
 
 static void crisv8_cpu_class_init(ObjectClass *oc, void *data)
 {
-    CPUClass *cc = CPU_CLASS(oc);
     CRISCPUClass *ccc = CRIS_CPU_CLASS(oc);
 
     ccc->vr = 8;
+#ifndef CONFIG_LIBTCG
+    CPUClass *cc = CPU_CLASS(oc);
     cc->do_interrupt = crisv10_cpu_do_interrupt;
     cc->gdb_read_register = crisv10_cpu_gdb_read_register;
     cc->tcg_initialize = cris_initialize_crisv10_tcg;
+#endif
 }
 
 static void crisv9_cpu_class_init(ObjectClass *oc, void *data)
 {
-    CPUClass *cc = CPU_CLASS(oc);
     CRISCPUClass *ccc = CRIS_CPU_CLASS(oc);
 
     ccc->vr = 9;
+#ifndef CONFIG_LIBTCG
+    CPUClass *cc = CPU_CLASS(oc);
     cc->do_interrupt = crisv10_cpu_do_interrupt;
     cc->gdb_read_register = crisv10_cpu_gdb_read_register;
     cc->tcg_initialize = cris_initialize_crisv10_tcg;
+#endif
 }
 
 static void crisv10_cpu_class_init(ObjectClass *oc, void *data)
 {
-    CPUClass *cc = CPU_CLASS(oc);
     CRISCPUClass *ccc = CRIS_CPU_CLASS(oc);
 
     ccc->vr = 10;
+#ifndef CONFIG_LIBTCG
+    CPUClass *cc = CPU_CLASS(oc);
     cc->do_interrupt = crisv10_cpu_do_interrupt;
     cc->gdb_read_register = crisv10_cpu_gdb_read_register;
     cc->tcg_initialize = cris_initialize_crisv10_tcg;
+#endif
 }
 
 static void crisv11_cpu_class_init(ObjectClass *oc, void *data)
 {
-    CPUClass *cc = CPU_CLASS(oc);
     CRISCPUClass *ccc = CRIS_CPU_CLASS(oc);
 
     ccc->vr = 11;
+#ifndef CONFIG_LIBTCG
+    CPUClass *cc = CPU_CLASS(oc);
     cc->do_interrupt = crisv10_cpu_do_interrupt;
     cc->gdb_read_register = crisv10_cpu_gdb_read_register;
     cc->tcg_initialize = cris_initialize_crisv10_tcg;
+#endif
 }
 
 static void crisv17_cpu_class_init(ObjectClass *oc, void *data)
 {
-    CPUClass *cc = CPU_CLASS(oc);
     CRISCPUClass *ccc = CRIS_CPU_CLASS(oc);
 
     ccc->vr = 17;
+#ifndef CONFIG_LIBTCG
+    CPUClass *cc = CPU_CLASS(oc);
     cc->do_interrupt = crisv10_cpu_do_interrupt;
     cc->gdb_read_register = crisv10_cpu_gdb_read_register;
     cc->tcg_initialize = cris_initialize_crisv10_tcg;
+#endif
 }
 
 static void crisv32_cpu_class_init(ObjectClass *oc, void *data)
@@ -268,17 +278,21 @@ static void cris_cpu_class_init(ObjectClass *oc, void *data)
 
     cc->class_by_name = cris_cpu_class_by_name;
     cc->has_work = cris_cpu_has_work;
+    cc->set_pc = cris_cpu_set_pc;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = cris_cpu_dump_state;
     cc->do_interrupt = cris_cpu_do_interrupt;
     cc->cpu_exec_interrupt = cris_cpu_exec_interrupt;
-    cc->dump_state = cris_cpu_dump_state;
-    cc->set_pc = cris_cpu_set_pc;
     cc->gdb_read_register = cris_cpu_gdb_read_register;
     cc->gdb_write_register = cris_cpu_gdb_write_register;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = cris_cpu_handle_mmu_fault;
 #else
     cc->get_phys_page_debug = cris_cpu_get_phys_page_debug;
     dc->vmsd = &vmstate_cris_cpu;
+#endif
+
 #endif
 
     cc->gdb_num_core_regs = 49;

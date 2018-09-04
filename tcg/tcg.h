@@ -86,14 +86,6 @@ typedef uint64_t tcg_target_ulong;
 #define TCG_OVERSIZED_GUEST 0
 #endif
 
-#if TCG_TARGET_NB_REGS <= 32
-typedef uint32_t TCGRegSet;
-#elif TCG_TARGET_NB_REGS <= 64
-typedef uint64_t TCGRegSet;
-#else
-#error unsupported
-#endif
-
 #if TCG_TARGET_REG_BITS == 32
 /* Turn some undef macros into false macros.  */
 #define TCG_TARGET_HAS_extrl_i64_i32    0
@@ -201,12 +193,16 @@ typedef uint64_t TCGRegSet;
 # define TARGET_INSN_START_WORDS (1 + TARGET_INSN_START_EXTRA_WORDS)
 #endif
 
-typedef enum TCGOpcode {
-#define DEF(name, oargs, iargs, cargs, flags) INDEX_op_ ## name,
-#include "tcg-opc.h"
-#undef DEF
-    NB_OPS,
-} TCGOpcode;
+#define PREFIX(x) TCG ## x
+#define PREFIX2(x) TCG_ ## x
+/* No prefix if not libtcg */
+#define PREFIX3(x) x
+
+#include "tcg-common.h"
+
+#undef PREFIX
+#undef PREFIX2
+#undef PREFIX3
 
 #define tcg_regset_set_reg(d, r)   ((d) |= (TCGRegSet)1 << (r))
 #define tcg_regset_reset_reg(d, r) ((d) &= ~((TCGRegSet)1 << (r)))
@@ -268,126 +264,6 @@ typedef struct TCGPool {
    this value, they are statically allocated in the TB stack frame */
 #define TCG_STATIC_CALL_ARGS_SIZE 128
 
-typedef enum TCGType {
-    TCG_TYPE_I32,
-    TCG_TYPE_I64,
-
-    TCG_TYPE_V64,
-    TCG_TYPE_V128,
-    TCG_TYPE_V256,
-
-    TCG_TYPE_COUNT, /* number of different types */
-
-    /* An alias for the size of the host register.  */
-#if TCG_TARGET_REG_BITS == 32
-    TCG_TYPE_REG = TCG_TYPE_I32,
-#else
-    TCG_TYPE_REG = TCG_TYPE_I64,
-#endif
-
-    /* An alias for the size of the native pointer.  */
-#if UINTPTR_MAX == UINT32_MAX
-    TCG_TYPE_PTR = TCG_TYPE_I32,
-#else
-    TCG_TYPE_PTR = TCG_TYPE_I64,
-#endif
-
-    /* An alias for the size of the target "long", aka register.  */
-#if TARGET_LONG_BITS == 64
-    TCG_TYPE_TL = TCG_TYPE_I64,
-#else
-    TCG_TYPE_TL = TCG_TYPE_I32,
-#endif
-} TCGType;
-
-/* Constants for qemu_ld and qemu_st for the Memory Operation field.  */
-typedef enum TCGMemOp {
-    MO_8     = 0,
-    MO_16    = 1,
-    MO_32    = 2,
-    MO_64    = 3,
-    MO_SIZE  = 3,   /* Mask for the above.  */
-
-    MO_SIGN  = 4,   /* Sign-extended, otherwise zero-extended.  */
-
-    MO_BSWAP = 8,   /* Host reverse endian.  */
-#ifdef HOST_WORDS_BIGENDIAN
-    MO_LE    = MO_BSWAP,
-    MO_BE    = 0,
-#else
-    MO_LE    = 0,
-    MO_BE    = MO_BSWAP,
-#endif
-#ifdef TARGET_WORDS_BIGENDIAN
-    MO_TE    = MO_BE,
-#else
-    MO_TE    = MO_LE,
-#endif
-
-    /* MO_UNALN accesses are never checked for alignment.
-     * MO_ALIGN accesses will result in a call to the CPU's
-     * do_unaligned_access hook if the guest address is not aligned.
-     * The default depends on whether the target CPU defines ALIGNED_ONLY.
-     *
-     * Some architectures (e.g. ARMv8) need the address which is aligned
-     * to a size more than the size of the memory access.
-     * Some architectures (e.g. SPARCv9) need an address which is aligned,
-     * but less strictly than the natural alignment.
-     *
-     * MO_ALIGN supposes the alignment size is the size of a memory access.
-     *
-     * There are three options:
-     * - unaligned access permitted (MO_UNALN).
-     * - an alignment to the size of an access (MO_ALIGN);
-     * - an alignment to a specified size, which may be more or less than
-     *   the access size (MO_ALIGN_x where 'x' is a size in bytes);
-     */
-    MO_ASHIFT = 4,
-    MO_AMASK = 7 << MO_ASHIFT,
-#ifdef ALIGNED_ONLY
-    MO_ALIGN = 0,
-    MO_UNALN = MO_AMASK,
-#else
-    MO_ALIGN = MO_AMASK,
-    MO_UNALN = 0,
-#endif
-    MO_ALIGN_2  = 1 << MO_ASHIFT,
-    MO_ALIGN_4  = 2 << MO_ASHIFT,
-    MO_ALIGN_8  = 3 << MO_ASHIFT,
-    MO_ALIGN_16 = 4 << MO_ASHIFT,
-    MO_ALIGN_32 = 5 << MO_ASHIFT,
-    MO_ALIGN_64 = 6 << MO_ASHIFT,
-
-    /* Combinations of the above, for ease of use.  */
-    MO_UB    = MO_8,
-    MO_UW    = MO_16,
-    MO_UL    = MO_32,
-    MO_SB    = MO_SIGN | MO_8,
-    MO_SW    = MO_SIGN | MO_16,
-    MO_SL    = MO_SIGN | MO_32,
-    MO_Q     = MO_64,
-
-    MO_LEUW  = MO_LE | MO_UW,
-    MO_LEUL  = MO_LE | MO_UL,
-    MO_LESW  = MO_LE | MO_SW,
-    MO_LESL  = MO_LE | MO_SL,
-    MO_LEQ   = MO_LE | MO_Q,
-
-    MO_BEUW  = MO_BE | MO_UW,
-    MO_BEUL  = MO_BE | MO_UL,
-    MO_BESW  = MO_BE | MO_SW,
-    MO_BESL  = MO_BE | MO_SL,
-    MO_BEQ   = MO_BE | MO_Q,
-
-    MO_TEUW  = MO_TE | MO_UW,
-    MO_TEUL  = MO_TE | MO_UL,
-    MO_TESW  = MO_TE | MO_SW,
-    MO_TESL  = MO_TE | MO_SL,
-    MO_TEQ   = MO_TE | MO_Q,
-
-    MO_SSIZE = MO_SIZE | MO_SIGN,
-} TCGMemOp;
-
 /**
  * get_alignment_bits
  * @memop: TCGMemOp value
@@ -414,8 +290,6 @@ static inline unsigned get_alignment_bits(TCGMemOp memop)
 #endif
     return a;
 }
-
-typedef tcg_target_ulong TCGArg;
 
 /* Define type and accessor macros for TCG variables.
 
@@ -479,30 +353,6 @@ typedef TCGv_ptr TCGv_env;
 /* Used to align parameters.  See the comment before tcgv_i32_temp.  */
 #define TCG_CALL_DUMMY_ARG      ((TCGArg)0)
 
-/* Conditions.  Note that these are laid out for easy manipulation by
-   the functions below:
-     bit 0 is used for inverting;
-     bit 1 is signed,
-     bit 2 is unsigned,
-     bit 3 is used with bit 0 for swapping signed/unsigned.  */
-typedef enum {
-    /* non-signed */
-    TCG_COND_NEVER  = 0 | 0 | 0 | 0,
-    TCG_COND_ALWAYS = 0 | 0 | 0 | 1,
-    TCG_COND_EQ     = 8 | 0 | 0 | 0,
-    TCG_COND_NE     = 8 | 0 | 0 | 1,
-    /* signed */
-    TCG_COND_LT     = 0 | 0 | 2 | 0,
-    TCG_COND_GE     = 0 | 0 | 2 | 1,
-    TCG_COND_LE     = 8 | 0 | 2 | 0,
-    TCG_COND_GT     = 8 | 0 | 2 | 1,
-    /* unsigned */
-    TCG_COND_LTU    = 0 | 4 | 0 | 0,
-    TCG_COND_GEU    = 0 | 4 | 0 | 1,
-    TCG_COND_LEU    = 8 | 4 | 0 | 0,
-    TCG_COND_GTU    = 8 | 4 | 0 | 1,
-} TCGCond;
-
 /* Invert the sense of the comparison.  */
 static inline TCGCond tcg_invert_cond(TCGCond c)
 {
@@ -547,44 +397,6 @@ static inline TCGCond tcg_high_cond(TCGCond c)
         return c;
     }
 }
-
-typedef enum TCGTempVal {
-    TEMP_VAL_DEAD,
-    TEMP_VAL_REG,
-    TEMP_VAL_MEM,
-    TEMP_VAL_CONST,
-} TCGTempVal;
-
-typedef struct TCGTemp {
-    TCGReg reg:8;
-    TCGTempVal val_type:8;
-    TCGType base_type:8;
-    TCGType type:8;
-    unsigned int fixed_reg:1;
-    unsigned int indirect_reg:1;
-    unsigned int indirect_base:1;
-    unsigned int mem_coherent:1;
-    unsigned int mem_allocated:1;
-    /* If true, the temp is saved across both basic blocks and
-       translation blocks.  */
-    unsigned int temp_global:1;
-    /* If true, the temp is saved across basic blocks but dead
-       at the end of translation blocks.  If false, the temp is
-       dead at the end of basic blocks.  */
-    unsigned int temp_local:1;
-    unsigned int temp_allocated:1;
-
-    tcg_target_long val;
-    struct TCGTemp *mem_base;
-    intptr_t mem_offset;
-    const char *name;
-
-    /* Pass-specific information that can be stored for a temporary.
-       One word worth of integer data, and one pointer to data
-       allocated separately.  */
-    uintptr_t state;
-    void *state_ptr;
-} TCGTemp;
 
 typedef struct TCGContext TCGContext;
 
@@ -861,6 +673,7 @@ static inline bool tcg_op_buf_full(void)
 void *tcg_malloc_internal(TCGContext *s, int size);
 void tcg_pool_reset(TCGContext *s);
 TranslationBlock *tcg_tb_alloc(TCGContext *s);
+TranslationBlock *tb_alloc(target_ulong pc);
 
 void tcg_region_init(void);
 void tcg_region_reset_all(void);
@@ -964,14 +777,6 @@ void tcg_dump_op_count(FILE *f, fprintf_function cpu_fprintf);
 #define TCG_CT_REG    0x01
 #define TCG_CT_CONST  0x02 /* any constant of register size */
 
-typedef struct TCGArgConstraint {
-    uint16_t ct;
-    uint8_t alias_index;
-    union {
-        TCGRegSet regs;
-    } u;
-} TCGArgConstraint;
-
 #define TCG_MAX_OP_ARGS 16
 
 /* Bits for TCGOpDef->flags, 8 bits available.  */
@@ -991,17 +796,6 @@ enum {
     /* Instruction operands are vectors.  */
     TCG_OPF_VECTOR       = 0x20,
 };
-
-typedef struct TCGOpDef {
-    const char *name;
-    uint8_t nb_oargs, nb_iargs, nb_cargs, nb_args;
-    uint8_t flags;
-    TCGArgConstraint *args_ct;
-    int *sorted_args;
-#if defined(CONFIG_DEBUG_TCG)
-    int used;
-#endif
-} TCGOpDef;
 
 extern TCGOpDef tcg_op_defs[];
 extern const size_t tcg_op_defs_max;

@@ -181,11 +181,12 @@ static void mips_cpu_class_init(ObjectClass *c, void *data)
 
     cc->class_by_name = mips_cpu_class_by_name;
     cc->has_work = mips_cpu_has_work;
-    cc->do_interrupt = mips_cpu_do_interrupt;
-    cc->cpu_exec_interrupt = mips_cpu_exec_interrupt;
-    cc->dump_state = mips_cpu_dump_state;
     cc->set_pc = mips_cpu_set_pc;
     cc->synchronize_from_tb = mips_cpu_synchronize_from_tb;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = mips_cpu_dump_state;
+    cc->do_interrupt = mips_cpu_do_interrupt;
+    cc->cpu_exec_interrupt = mips_cpu_exec_interrupt;
     cc->gdb_read_register = mips_cpu_gdb_read_register;
     cc->gdb_write_register = mips_cpu_gdb_write_register;
 #ifdef CONFIG_USER_ONLY
@@ -195,6 +196,7 @@ static void mips_cpu_class_init(ObjectClass *c, void *data)
     cc->do_unaligned_access = mips_cpu_do_unaligned_access;
     cc->get_phys_page_debug = mips_cpu_get_phys_page_debug;
     cc->vmsd = &vmstate_mips_cpu;
+#endif
 #endif
     cc->disas_set_info = mips_cpu_disas_set_info;
 #ifdef CONFIG_TCG

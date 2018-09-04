@@ -69,6 +69,7 @@ static int extract_branch_offset(int opcode)
   return (((signed short)((opcode & ((1 << 10) - 1)) << 6)) >> 6) << 1;
 }
 
+#ifndef CONFIG_LIBTCG
 void moxie_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                           int flags)
 {
@@ -89,6 +90,7 @@ void moxie_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                     i, env->sregs[i + 2], i+1, env->sregs[i + 3]);
     }
 }
+#endif
 
 void moxie_translate_init(void)
 {

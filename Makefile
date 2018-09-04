@@ -65,7 +65,16 @@ endif
 CONFIG_SOFTMMU := $(if $(filter %-softmmu,$(TARGET_DIRS)),y)
 CONFIG_USER_ONLY := $(if $(filter %-user,$(TARGET_DIRS)),y)
 CONFIG_XEN := $(CONFIG_XEN_BACKEND)
+CONFIG_LIBTCG := $(if $(filter %-libtcg,$(TARGET_DIRS)),y)
 CONFIG_ALL=y
+
+# If there's at least a *-libtcg target we need to build everything with -fPIC
+# and with default visibility hidden, so that we don't export symbols that are
+# not needed
+ifeq ($(CONFIG_LIBTCG),y)
+QEMU_CFLAGS += -fPIC -fvisibility=hidden
+endif
+
 -include config-all-devices.mak
 -include config-all-disas.mak
 
@@ -498,6 +507,9 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
 CAP_CFLAGS += -DCAPSTONE_HAS_ARM64
 CAP_CFLAGS += -DCAPSTONE_HAS_POWERPC
 CAP_CFLAGS += -DCAPSTONE_HAS_X86
+#ifeq ($(CONFIG_LIBTCG),y)
+#CAP_CFLAGS += -fPIC
+#endif
 
 subdir-capstone: .git-submodule-status
 	$(call quiet-command,$(MAKE) -C $(SRC_PATH)/capstone CAPSTONE_SHARED=no BUILDDIR="$(BUILD_DIR)/capstone" CC="$(CC)" AR="$(AR)" LD="$(LD)" RANLIB="$(RANLIB)" CFLAGS="$(CAP_CFLAGS)" $(SUBDIR_MAKEFLAGS) $(BUILD_DIR)/capstone/$(LIBCAPSTONE))

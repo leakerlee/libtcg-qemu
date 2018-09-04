@@ -323,6 +323,15 @@ static void arm_cpu_reset(CPUState *s)
     hw_watchpoint_update_all(cpu);
 }
 
+#ifdef CONFIG_LIBTCG
+
+bool arm_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
+{
+    abort();
+}
+
+#else
+
 bool arm_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 {
     CPUClass *cc = CPU_GET_CLASS(cs);
@@ -376,6 +385,7 @@ bool arm_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 
     return ret;
 }
+#endif
 
 #if !defined(CONFIG_USER_ONLY) || !defined(TARGET_AARCH64)
 static bool arm_v7m_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
@@ -937,7 +947,9 @@ static void arm_cpu_realizefn(DeviceState *dev, Error **errp)
     }
 
     register_cp_regs_for_features(cpu);
+#ifndef CONFIG_LIBTCG
     arm_cpu_register_gdb_regs_for_features(cpu);
+#endif
 
     init_cpreg_list(cpu);
 
@@ -1861,10 +1873,7 @@ static void arm_cpu_class_init(ObjectClass *oc, void *data)
     cc->class_by_name = arm_cpu_class_by_name;
     cc->has_work = arm_cpu_has_work;
     cc->cpu_exec_interrupt = arm_cpu_exec_interrupt;
-    cc->dump_state = arm_cpu_dump_state;
     cc->set_pc = arm_cpu_set_pc;
-    cc->gdb_read_register = arm_cpu_gdb_read_register;
-    cc->gdb_write_register = arm_cpu_gdb_write_register;
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = arm_cpu_handle_mmu_fault;
 #else
@@ -1882,8 +1891,13 @@ static void arm_cpu_class_init(ObjectClass *oc, void *data)
     cc->gdb_core_xml_file = "arm-core.xml";
     cc->gdb_arch_name = arm_gdb_arch_name;
     cc->gdb_stop_before_watchpoint = true;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = arm_cpu_dump_state;
     cc->debug_excp_handler = arm_debug_excp_handler;
+    cc->gdb_read_register = arm_cpu_gdb_read_register;
+    cc->gdb_write_register = arm_cpu_gdb_write_register;
     cc->debug_check_watchpoint = arm_debug_check_watchpoint;
+#endif
 #if !defined(CONFIG_USER_ONLY)
     cc->adjust_watchpoint_address = arm_adjust_watchpoint_address;
 #endif

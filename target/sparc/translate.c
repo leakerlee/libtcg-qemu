@@ -5967,3 +5967,90 @@ void restore_state_to_opc(CPUSPARCState *env, TranslationBlock *tb,
         env->npc = npc;
     }
 }
+
+#ifndef CONFIG_LIBTCG
+static void cpu_print_cc(FILE *f, fprintf_function cpu_fprintf,
+                         uint32_t cc)
+{
+    cpu_fprintf(f, "%c%c%c%c", cc & PSR_NEG ? 'N' : '-',
+                cc & PSR_ZERO ? 'Z' : '-', cc & PSR_OVF ? 'V' : '-',
+                cc & PSR_CARRY ? 'C' : '-');
+}
+
+#ifdef TARGET_SPARC64
+#define REGS_PER_LINE 4
+#else
+#define REGS_PER_LINE 8
+#endif
+
+void sparc_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
+                          int flags)
+{
+    SPARCCPU *cpu = SPARC_CPU(cs);
+    CPUSPARCState *env = &cpu->env;
+    int i, x;
+
+    cpu_fprintf(f, "pc: " TARGET_FMT_lx "  npc: " TARGET_FMT_lx "\n", env->pc,
+                env->npc);
+
+    for (i = 0; i < 8; i++) {
+        if (i % REGS_PER_LINE == 0) {
+            cpu_fprintf(f, "%%g%d-%d:", i, i + REGS_PER_LINE - 1);
+        }
+        cpu_fprintf(f, " " TARGET_FMT_lx, env->gregs[i]);
+        if (i % REGS_PER_LINE == REGS_PER_LINE - 1) {
+            cpu_fprintf(f, "\n");
+        }
+    }
+    for (x = 0; x < 3; x++) {
+        for (i = 0; i < 8; i++) {
+            if (i % REGS_PER_LINE == 0) {
+                cpu_fprintf(f, "%%%c%d-%d: ",
+                            x == 0 ? 'o' : (x == 1 ? 'l' : 'i'),
+                            i, i + REGS_PER_LINE - 1);
+            }
+            cpu_fprintf(f, TARGET_FMT_lx " ", env->regwptr[i + x * 8]);
+            if (i % REGS_PER_LINE == REGS_PER_LINE - 1) {
+                cpu_fprintf(f, "\n");
+            }
+        }
+    }
+
+    for (i = 0; i < TARGET_DPREGS; i++) {
+        if ((i & 3) == 0) {
+            cpu_fprintf(f, "%%f%02d: ", i * 2);
+        }
+        cpu_fprintf(f, " %016" PRIx64, env->fpr[i].ll);
+        if ((i & 3) == 3) {
+            cpu_fprintf(f, "\n");
+        }
+    }
+#ifdef TARGET_SPARC64
+    cpu_fprintf(f, "pstate: %08x ccr: %02x (icc: ", env->pstate,
+                (unsigned)cpu_get_ccr(env));
+    cpu_print_cc(f, cpu_fprintf, cpu_get_ccr(env) << PSR_CARRY_SHIFT);
+    cpu_fprintf(f, " xcc: ");
+    cpu_print_cc(f, cpu_fprintf, cpu_get_ccr(env) << (PSR_CARRY_SHIFT - 4));
+    cpu_fprintf(f, ") asi: %02x tl: %d pil: %x gl: %d\n", env->asi, env->tl,
+                env->psrpil, env->gl);
+    cpu_fprintf(f, "tbr: " TARGET_FMT_lx " hpstate: " TARGET_FMT_lx " htba: "
+                TARGET_FMT_lx "\n", env->tbr, env->hpstate, env->htba);
+    cpu_fprintf(f, "cansave: %d canrestore: %d otherwin: %d wstate: %d "
+                "cleanwin: %d cwp: %d\n",
+                env->cansave, env->canrestore, env->otherwin, env->wstate,
+                env->cleanwin, env->nwindows - 1 - env->cwp);
+    cpu_fprintf(f, "fsr: " TARGET_FMT_lx " y: " TARGET_FMT_lx " fprs: "
+                TARGET_FMT_lx "\n", env->fsr, env->y, env->fprs);
+
+#else
+    cpu_fprintf(f, "psr: %08x (icc: ", cpu_get_psr(env));
+    cpu_print_cc(f, cpu_fprintf, cpu_get_psr(env));
+    cpu_fprintf(f, " SPE: %c%c%c) wim: %08x\n", env->psrs ? 'S' : '-',
+                env->psrps ? 'P' : '-', env->psret ? 'E' : '-',
+                env->wim);
+    cpu_fprintf(f, "fsr: " TARGET_FMT_lx " y: " TARGET_FMT_lx "\n",
+                env->fsr, env->y);
+#endif
+    cpu_fprintf(f, "\n");
+}
+#endif

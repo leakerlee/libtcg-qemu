@@ -88,6 +88,7 @@ enum {
     MODE_UU = 3,
 };
 
+#ifndef CONFIG_LIBTCG
 void tricore_cpu_dump_state(CPUState *cs, FILE *f,
                             fprintf_function cpu_fprintf, int flags)
 {
@@ -119,6 +120,7 @@ void tricore_cpu_dump_state(CPUState *cs, FILE *f,
     }
     cpu_fprintf(f, "\n");
 }
+#endif
 
 /*
  * Functions to generate micro-ops

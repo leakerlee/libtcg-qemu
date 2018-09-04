@@ -4083,6 +4083,7 @@ void cpu_loop(CPUXtensaState *env)
 
 __thread CPUState *thread_cpu;
 
+#ifndef CONFIG_LIBTCG
 bool qemu_cpu_is_self(CPUState *cpu)
 {
     return thread_cpu == cpu;
@@ -4092,6 +4093,7 @@ void qemu_cpu_kick(CPUState *cpu)
 {
     cpu_exit(cpu);
 }
+#endif
 
 void task_settid(TaskState *ts)
 {

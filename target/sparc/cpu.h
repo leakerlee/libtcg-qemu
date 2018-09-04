@@ -737,6 +737,8 @@ static inline int cpu_interrupts_enabled(CPUSPARCState *env1)
     return 0;
 }
 
+void compute_psr(CPUSPARCState *env);
+
 static inline int cpu_pil_allowed(CPUSPARCState *env1, int pil)
 {
 #if !defined(TARGET_SPARC64)

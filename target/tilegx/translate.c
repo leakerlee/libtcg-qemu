@@ -26,7 +26,15 @@
 #include "exec/exec-all.h"
 #include "tcg-op.h"
 #include "exec/cpu_ldst.h"
-#include "linux-user/syscall_defs.h"
+
+#ifdef CONFIG_LIBTCG
+# define TARGET_SIGTRAP 0
+# define TARGET_TRAP_BRKPT 0
+# define TARGET_SIGILL 0
+# define TARGET_ILL_ILLOPC 0
+#else
+# include "linux-user/syscall_defs.h"
+#endif
 
 #include "opcode_tilegx.h"
 #include "spr_def_64.h"
@@ -2451,3 +2459,31 @@ void tilegx_tcg_init(void)
                                              reg_names[i]);
     }
 }
+
+#ifndef CONFIG_LIBTCG
+void tilegx_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
+                           int flags)
+{
+    static const char * const reg_names[TILEGX_R_COUNT] = {
+         "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
+         "r8",  "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+        "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+        "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
+        "r32", "r33", "r34", "r35", "r36", "r37", "r38", "r39",
+        "r40", "r41", "r42", "r43", "r44", "r45", "r46", "r47",
+        "r48", "r49", "r50", "r51",  "bp",  "tp",  "sp",  "lr"
+    };
+
+    TileGXCPU *cpu = TILEGX_CPU(cs);
+    CPUTLGState *env = &cpu->env;
+    int i;
+
+    for (i = 0; i < TILEGX_R_COUNT; i++) {
+        cpu_fprintf(f, "%-4s" TARGET_FMT_lx "%s",
+                    reg_names[i], env->regs[i],
+                    (i % 4) == 3 ? "\n" : " ");
+    }
+    cpu_fprintf(f, "PC  " TARGET_FMT_lx " CEX " TARGET_FMT_lx "\n\n",
+                env->pc, env->spregs[TILEGX_SPR_CMPEXCH]);
+}
+#endif

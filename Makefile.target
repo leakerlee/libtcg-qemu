@@ -13,12 +13,26 @@ QEMU_CFLAGS += -I../linux-headers
 endif
 QEMU_CFLAGS += -iquote .. -iquote $(SRC_PATH)/target/$(TARGET_BASE_ARCH) -DNEED_CPU_H
 
-QEMU_CFLAGS+=-iquote $(SRC_PATH)/include
+QEMU_CFLAGS += -iquote $(SRC_PATH)/include
+
+# By default install in bindir
+PROGS_INSTALL_DIR := $(bindir)
 
 ifdef CONFIG_USER_ONLY
+ifdef CONFIG_LIBTCG
+# libtcg
+QEMU_PROG=libtcg-$(TARGET_NAME)$(DSOSUF).$(VERSION)
+QEMU_PROG_BUILD = $(QEMU_PROG)
+QEMU_CFLAGS += -fPIC -fvisibility=hidden
+LIBTCG_SONAME=libtcg-$(TARGET_NAME)$(DSOSUF).0
+
+# Change the install directory
+LIBS_INSTALL_DIR := $(libdir)
+else
 # user emulator name
 QEMU_PROG=qemu-$(TARGET_NAME)
 QEMU_PROG_BUILD = $(QEMU_PROG)
+endif
 else
 # system emulator name
 QEMU_PROG=qemu-system-$(TARGET_NAME)$(EXESUF)
@@ -91,13 +105,16 @@ all: $(PROGS) stap
 
 #########################################################
 # cpu emulator library
-obj-y += exec.o
-obj-y += accel/
-obj-$(CONFIG_TCG) += tcg/tcg.o tcg/tcg-op.o tcg/tcg-op-vec.o tcg/tcg-op-gvec.o
-obj-$(CONFIG_TCG) += tcg/tcg-common.o tcg/optimize.o
+obj-y = exec.o
+#obj-$(call land,$(CONFIG_USER_ONLY),$(call lnot,$(CONFIG_BSD_USER))) += mmap.o
+obj-$(CONFIG_TCG) += fpu/softfloat.o
+ifndef CONFIG_LIBTCG
+obj-$(CONFIG_TCG) += tcg/optimize.o
+endif
+obj-$(CONFIG_TCG) += tcg/tcg.o tcg/tcg-op.o tcg/tcg-op-vec.o tcg/tcg-op-gvec.o tcg/tcg-common.o
 obj-$(CONFIG_TCG_INTERPRETER) += tcg/tci.o
 obj-$(CONFIG_TCG_INTERPRETER) += disas/tci.o
-obj-y += fpu/softfloat.o
+obj-y += accel/
 obj-y += target/$(TARGET_BASE_ARCH)/
 obj-y += disas.o
 obj-$(call notempty,$(TARGET_XML_FILES)) += gdbstub-xml.o
@@ -128,6 +145,22 @@ obj-y += bsd-user/
 obj-y += gdbstub.o
 
 endif #CONFIG_BSD_USER
+
+#########################################################
+# libtcg target
+
+ifdef CONFIG_LIBTCG
+
+QEMU_CFLAGS+=-I$(SRC_PATH)/libtcg \
+             -I$(SRC_PATH)/libtcg/host/$(ARCH) \
+             -I$(SRC_PATH)/libtcg/$(TARGET_ABI_DIR)
+obj-y += libtcg/
+obj-y += gdbstub.o
+obj-y += thunk.o
+
+LDFLAGS+=$(LDFLAGS_SHARED) -Wl,--no-undefined,-soname,$(LIBTCG_SONAME)
+
+endif #CONFIG_LIBTCG
 
 #########################################################
 # System emulator target
@@ -180,7 +213,10 @@ all-obj-y += $(common-obj-y)
 all-obj-y += $(target-obj-y)
 all-obj-y += $(qom-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(block-obj-y) $(chardev-obj-y)
-all-obj-$(CONFIG_USER_ONLY) += $(crypto-aes-obj-y)
+ifdef CONFIG_USER_ONLY
+    #all-obj-$(call lnot,$(CONFIG_LIBTCG)) += $(crypto-aes-obj-y)
+    all-obj-y += $(crypto-aes-obj-y)
+endif
 all-obj-$(CONFIG_SOFTMMU) += $(crypto-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(io-obj-y)
 
@@ -214,8 +250,16 @@ ifdef CONFIG_TRACE_SYSTEMTAP
 endif
 
 install: all
+ifdef CONFIG_LIBTCG
+	mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(SRC_PATH)/include/tcg-opc.h $(SRC_PATH)/include/libtcg.h $(SRC_PATH)/include/tcg-common.h "$(DESTDIR)$(includedir)"
+endif
 ifneq ($(PROGS),)
-	$(call install-prog,$(PROGS),$(DESTDIR)$(bindir))
+ifdef CONFIG_LIBTCG
+	$(call install-prog,$(PROGS),$(DESTDIR)$(LIBS_INSTALL_DIR))
+else
+	$(call install-prog,$(PROGS),$(DESTDIR)$(PROGS_INSTALL_DIR))
+endif
 endif
 ifdef CONFIG_TRACE_SYSTEMTAP
 	$(INSTALL_DIR) "$(DESTDIR)$(qemu_datadir)/../systemtap/tapset"

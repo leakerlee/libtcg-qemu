@@ -1816,6 +1816,7 @@ void gen_intermediate_code(CPUState *cs, struct TranslationBlock *tb)
     assert(!dc->abort_at_next_insn);
 }
 
+#ifndef CONFIG_LIBTCG
 void mb_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                        int flags)
 {
@@ -1845,6 +1846,7 @@ void mb_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
         }
     cpu_fprintf(f, "\n\n");
 }
+#endif
 
 void mb_tcg_init(void)
 {

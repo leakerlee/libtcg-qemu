@@ -266,18 +266,22 @@ static void mb_cpu_class_init(ObjectClass *oc, void *data)
 
     cc->class_by_name = mb_cpu_class_by_name;
     cc->has_work = mb_cpu_has_work;
+#ifndef CONFIG_LIBTCG
     cc->do_interrupt = mb_cpu_do_interrupt;
     cc->cpu_exec_interrupt = mb_cpu_exec_interrupt;
     cc->dump_state = mb_cpu_dump_state;
-    cc->set_pc = mb_cpu_set_pc;
     cc->gdb_read_register = mb_cpu_gdb_read_register;
     cc->gdb_write_register = mb_cpu_gdb_write_register;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = mb_cpu_handle_mmu_fault;
 #else
     cc->do_unassigned_access = mb_cpu_unassigned_access;
     cc->get_phys_page_debug = mb_cpu_get_phys_page_debug;
 #endif
+
+#endif
+    cc->set_pc = mb_cpu_set_pc;
     dc->vmsd = &vmstate_mb_cpu;
     dc->props = mb_properties;
     cc->gdb_num_core_regs = 32 + 5;

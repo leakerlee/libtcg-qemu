@@ -156,6 +156,7 @@ void sh4_translate_init(void)
                                               fregnames[i]);
 }
 
+#ifndef CONFIG_LIBTCG
 void superh_cpu_dump_state(CPUState *cs, FILE *f,
                            fprintf_function cpu_fprintf, int flags)
 {
@@ -184,6 +185,7 @@ void superh_cpu_dump_state(CPUState *cs, FILE *f,
                     env->delayed_pc);
     }
 }
+#endif
 
 static void gen_read_sr(TCGv dst)
 {

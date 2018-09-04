@@ -22,10 +22,12 @@
  * THE SOFTWARE.
  */
 
-/* define it to use liveness analysis (better code) */
-#define USE_TCG_OPTIMIZATIONS
-
 #include "qemu/osdep.h"
+
+/* define it to use liveness analysis (better code) */
+#ifndef CONFIG_LIBTCG
+# define USE_TCG_OPTIMIZATIONS
+#endif
 
 /* Define to jump the ELF file used to communicate with GDB.  */
 #undef DEBUG_JIT
@@ -661,19 +663,13 @@ void tcg_pool_reset(TCGContext *s)
     s->pool_current = NULL;
 }
 
-typedef struct TCGHelperInfo {
-    void *func;
-    const char *name;
-    unsigned flags;
-    unsigned sizemask;
-} TCGHelperInfo;
-
 #include "exec/helper-proto.h"
 
 static const TCGHelperInfo all_helpers[] = {
 #include "exec/helper-tcg.h"
 };
 static GHashTable *helper_table;
+GHashTable *g_pHelperTable;
 
 static int indirect_reg_alloc_order[ARRAY_SIZE(tcg_target_reg_alloc_order)];
 static void process_op_defs(TCGContext *s);
@@ -715,6 +711,7 @@ void tcg_context_init(TCGContext *s)
     /* Register helpers.  */
     /* Use g_direct_hash/equal for direct pointer comparisons on func.  */
     helper_table = g_hash_table_new(NULL, NULL);
+    g_pHelperTable = helper_table;
 
     for (i = 0; i < ARRAY_SIZE(all_helpers); ++i) {
         g_hash_table_insert(helper_table, (gpointer)all_helpers[i].func,

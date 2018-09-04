@@ -1161,6 +1161,7 @@ void gen_intermediate_code(CPUState *cs, struct TranslationBlock *tb)
 #endif
 }
 
+#ifndef CONFIG_LIBTCG
 void lm32_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                          int flags)
 {
@@ -1194,6 +1195,7 @@ void lm32_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
     }
     cpu_fprintf(f, "\n\n");
 }
+#endif
 
 void restore_state_to_opc(CPULM32State *env, TranslationBlock *tb,
                           target_ulong *data)

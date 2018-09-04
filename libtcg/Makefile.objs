@@ -1,0 +1,6 @@
+obj-y += libtcg.o main.o mmap.o uaccess.o syscall.o safe-syscall.o signal.o strace.o uname.o elfload.o linuxload.o flatload.o
+
+obj-$(TARGET_ARM) += arm/nwfpe/
+obj-$(TARGET_I386) += vm86.o
+obj-$(TARGET_M68K) += m68k-sim.o
+obj-$(TARGET_HAS_BFLT) += flatload.o

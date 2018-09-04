@@ -1656,6 +1656,7 @@ void gen_intermediate_code(CPUState *cs, struct TranslationBlock *tb)
     }
 }
 
+#ifndef CONFIG_LIBTCG
 void openrisc_cpu_dump_state(CPUState *cs, FILE *f,
                              fprintf_function cpu_fprintf,
                              int flags)
@@ -1670,6 +1671,7 @@ void openrisc_cpu_dump_state(CPUState *cs, FILE *f,
                     (i % 4) == 3 ? '\n' : ' ');
     }
 }
+#endif
 
 void restore_state_to_opc(CPUOpenRISCState *env, TranslationBlock *tb,
                           target_ulong *data)

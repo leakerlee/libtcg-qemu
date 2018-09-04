@@ -3,6 +3,8 @@
 #include "qom/cpu.h"
 #include "sysemu/replay.h"
 
+#ifndef CONFIG_LIBTCG
+
 void cpu_resume(CPUState *cpu)
 {
 }
@@ -10,6 +12,8 @@ void cpu_resume(CPUState *cpu)
 void qemu_init_vcpu(CPUState *cpu)
 {
 }
+
+#endif
 
 /* User mode emulation does not support record/replay yet.  */
 

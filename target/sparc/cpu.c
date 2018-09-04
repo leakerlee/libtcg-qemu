@@ -76,6 +76,7 @@ static void sparc_cpu_reset(CPUState *s)
     env->cache_control = 0;
 }
 
+#ifndef CONFIG_LIBTCG
 static bool sparc_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 {
     if (interrupt_request & CPU_INTERRUPT_HARD) {
@@ -95,6 +96,7 @@ static bool sparc_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
     }
     return false;
 }
+#endif
 
 static void cpu_sparc_disas_set_info(CPUState *cpu, disassemble_info *info)
 {
@@ -600,91 +602,6 @@ void sparc_cpu_list(FILE *f, fprintf_function cpu_fprintf)
                    "fpu_version mmu_version nwindows\n");
 }
 
-static void cpu_print_cc(FILE *f, fprintf_function cpu_fprintf,
-                         uint32_t cc)
-{
-    cpu_fprintf(f, "%c%c%c%c", cc & PSR_NEG ? 'N' : '-',
-                cc & PSR_ZERO ? 'Z' : '-', cc & PSR_OVF ? 'V' : '-',
-                cc & PSR_CARRY ? 'C' : '-');
-}
-
-#ifdef TARGET_SPARC64
-#define REGS_PER_LINE 4
-#else
-#define REGS_PER_LINE 8
-#endif
-
-void sparc_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
-                          int flags)
-{
-    SPARCCPU *cpu = SPARC_CPU(cs);
-    CPUSPARCState *env = &cpu->env;
-    int i, x;
-
-    cpu_fprintf(f, "pc: " TARGET_FMT_lx "  npc: " TARGET_FMT_lx "\n", env->pc,
-                env->npc);
-
-    for (i = 0; i < 8; i++) {
-        if (i % REGS_PER_LINE == 0) {
-            cpu_fprintf(f, "%%g%d-%d:", i, i + REGS_PER_LINE - 1);
-        }
-        cpu_fprintf(f, " " TARGET_FMT_lx, env->gregs[i]);
-        if (i % REGS_PER_LINE == REGS_PER_LINE - 1) {
-            cpu_fprintf(f, "\n");
-        }
-    }
-    for (x = 0; x < 3; x++) {
-        for (i = 0; i < 8; i++) {
-            if (i % REGS_PER_LINE == 0) {
-                cpu_fprintf(f, "%%%c%d-%d: ",
-                            x == 0 ? 'o' : (x == 1 ? 'l' : 'i'),
-                            i, i + REGS_PER_LINE - 1);
-            }
-            cpu_fprintf(f, TARGET_FMT_lx " ", env->regwptr[i + x * 8]);
-            if (i % REGS_PER_LINE == REGS_PER_LINE - 1) {
-                cpu_fprintf(f, "\n");
-            }
-        }
-    }
-
-    for (i = 0; i < TARGET_DPREGS; i++) {
-        if ((i & 3) == 0) {
-            cpu_fprintf(f, "%%f%02d: ", i * 2);
-        }
-        cpu_fprintf(f, " %016" PRIx64, env->fpr[i].ll);
-        if ((i & 3) == 3) {
-            cpu_fprintf(f, "\n");
-        }
-    }
-#ifdef TARGET_SPARC64
-    cpu_fprintf(f, "pstate: %08x ccr: %02x (icc: ", env->pstate,
-                (unsigned)cpu_get_ccr(env));
-    cpu_print_cc(f, cpu_fprintf, cpu_get_ccr(env) << PSR_CARRY_SHIFT);
-    cpu_fprintf(f, " xcc: ");
-    cpu_print_cc(f, cpu_fprintf, cpu_get_ccr(env) << (PSR_CARRY_SHIFT - 4));
-    cpu_fprintf(f, ") asi: %02x tl: %d pil: %x gl: %d\n", env->asi, env->tl,
-                env->psrpil, env->gl);
-    cpu_fprintf(f, "tbr: " TARGET_FMT_lx " hpstate: " TARGET_FMT_lx " htba: "
-                TARGET_FMT_lx "\n", env->tbr, env->hpstate, env->htba);
-    cpu_fprintf(f, "cansave: %d canrestore: %d otherwin: %d wstate: %d "
-                "cleanwin: %d cwp: %d\n",
-                env->cansave, env->canrestore, env->otherwin, env->wstate,
-                env->cleanwin, env->nwindows - 1 - env->cwp);
-    cpu_fprintf(f, "fsr: " TARGET_FMT_lx " y: " TARGET_FMT_lx " fprs: "
-                TARGET_FMT_lx "\n", env->fsr, env->y, env->fprs);
-
-#else
-    cpu_fprintf(f, "psr: %08x (icc: ", cpu_get_psr(env));
-    cpu_print_cc(f, cpu_fprintf, cpu_get_psr(env));
-    cpu_fprintf(f, " SPE: %c%c%c) wim: %08x\n", env->psrs ? 'S' : '-',
-                env->psrps ? 'P' : '-', env->psret ? 'E' : '-',
-                env->wim);
-    cpu_fprintf(f, "fsr: " TARGET_FMT_lx " y: " TARGET_FMT_lx "\n",
-                env->fsr, env->y);
-#endif
-    cpu_fprintf(f, "\n");
-}
-
 static void sparc_cpu_set_pc(CPUState *cs, vaddr value)
 {
     SPARCCPU *cpu = SPARC_CPU(cs);
@@ -868,16 +785,18 @@ static void sparc_cpu_class_init(ObjectClass *oc, void *data)
     cc->class_by_name = sparc_cpu_class_by_name;
     cc->parse_features = sparc_cpu_parse_features;
     cc->has_work = sparc_cpu_has_work;
-    cc->do_interrupt = sparc_cpu_do_interrupt;
-    cc->cpu_exec_interrupt = sparc_cpu_exec_interrupt;
-    cc->dump_state = sparc_cpu_dump_state;
 #if !defined(TARGET_SPARC64) && !defined(CONFIG_USER_ONLY)
     cc->memory_rw_debug = sparc_cpu_memory_rw_debug;
 #endif
     cc->set_pc = sparc_cpu_set_pc;
     cc->synchronize_from_tb = sparc_cpu_synchronize_from_tb;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = sparc_cpu_dump_state;
+    cc->do_interrupt = sparc_cpu_do_interrupt;
+    cc->cpu_exec_interrupt = sparc_cpu_exec_interrupt;
     cc->gdb_read_register = sparc_cpu_gdb_read_register;
     cc->gdb_write_register = sparc_cpu_gdb_write_register;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = sparc_cpu_handle_mmu_fault;
 #else
@@ -885,6 +804,8 @@ static void sparc_cpu_class_init(ObjectClass *oc, void *data)
     cc->do_unaligned_access = sparc_cpu_do_unaligned_access;
     cc->get_phys_page_debug = sparc_cpu_get_phys_page_debug;
     cc->vmsd = &vmstate_sparc_cpu;
+#endif
+
 #endif
     cc->disas_set_info = cpu_sparc_disas_set_info;
     cc->tcg_initialize = sparc_tcg_init;

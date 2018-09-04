@@ -217,11 +217,15 @@ static void any_cpu_initfn(Object *obj)
 static void m68k_cpu_realizefn(DeviceState *dev, Error **errp)
 {
     CPUState *cs = CPU(dev);
+#ifndef CONFIG_LIBTCG
     M68kCPU *cpu = M68K_CPU(dev);
+#endif
     M68kCPUClass *mcc = M68K_CPU_GET_CLASS(dev);
     Error *local_err = NULL;
 
+#ifndef CONFIG_LIBTCG
     register_m68k_insns(&cpu->env);
+#endif
 
     cpu_exec_realizefn(cs, &local_err);
     if (local_err != NULL) {
@@ -229,7 +233,9 @@ static void m68k_cpu_realizefn(DeviceState *dev, Error **errp)
         return;
     }
 
+#ifndef CONFIG_LIBTCG
     m68k_cpu_init_gdb(cpu);
+#endif
 
     cpu_reset(cs);
     qemu_init_vcpu(cs);
@@ -264,16 +270,19 @@ static void m68k_cpu_class_init(ObjectClass *c, void *data)
 
     cc->class_by_name = m68k_cpu_class_by_name;
     cc->has_work = m68k_cpu_has_work;
+    cc->set_pc = m68k_cpu_set_pc;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = m68k_cpu_dump_state;
     cc->do_interrupt = m68k_cpu_do_interrupt;
     cc->cpu_exec_interrupt = m68k_cpu_exec_interrupt;
-    cc->dump_state = m68k_cpu_dump_state;
-    cc->set_pc = m68k_cpu_set_pc;
     cc->gdb_read_register = m68k_cpu_gdb_read_register;
     cc->gdb_write_register = m68k_cpu_gdb_write_register;
     cc->handle_mmu_fault = m68k_cpu_handle_mmu_fault;
 #if defined(CONFIG_SOFTMMU)
     cc->do_unassigned_access = m68k_cpu_unassigned_access;
     cc->get_phys_page_debug = m68k_cpu_get_phys_page_debug;
+#endif
+
 #endif
     cc->disas_set_info = m68k_cpu_disas_set_info;
     cc->tcg_initialize = m68k_tcg_init;

@@ -232,18 +232,22 @@ static void superh_cpu_class_init(ObjectClass *oc, void *data)
 
     cc->class_by_name = superh_cpu_class_by_name;
     cc->has_work = superh_cpu_has_work;
-    cc->do_interrupt = superh_cpu_do_interrupt;
-    cc->cpu_exec_interrupt = superh_cpu_exec_interrupt;
-    cc->dump_state = superh_cpu_dump_state;
     cc->set_pc = superh_cpu_set_pc;
     cc->synchronize_from_tb = superh_cpu_synchronize_from_tb;
+#ifndef CONFIG_LIBTCG
+    cc->dump_state = superh_cpu_dump_state;
+    cc->do_interrupt = superh_cpu_do_interrupt;
+    cc->cpu_exec_interrupt = superh_cpu_exec_interrupt;
     cc->gdb_read_register = superh_cpu_gdb_read_register;
     cc->gdb_write_register = superh_cpu_gdb_write_register;
+
 #ifdef CONFIG_USER_ONLY
     cc->handle_mmu_fault = superh_cpu_handle_mmu_fault;
 #else
     cc->do_unaligned_access = superh_cpu_do_unaligned_access;
     cc->get_phys_page_debug = superh_cpu_get_phys_page_debug;
+#endif
+
 #endif
     cc->disas_set_info = superh_cpu_disas_set_info;
     cc->tcg_initialize = sh4_translate_init;

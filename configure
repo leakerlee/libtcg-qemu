@@ -107,6 +107,32 @@ update_cxxflags() {
                 ;;
         esac
     done
+
+    fPIC_enabled=0
+    temp_QEMU_CXXFLAGS=""
+    if test "${libtcg}" = "yes"; then
+        #echo "QEMU_CXXFLAGS: ${QEMU_CXXFLAGS}"
+        for elem in ${QEMU_CXXFLAGS}; do
+            case ${elem} in
+                -fPIC)
+                    fPIC_enabled=1
+                    ;;
+                -fPIE|-DPIE)
+                    #echo "-fPIE|-DPIE: "${elem}
+                    ;;
+                *)
+                    #echo "*"
+                    temp_QEMU_CXXFLAGS="${temp_QEMU_CXXFLAGS:+$temp_QEMU_CXXFLAGS }${elem}"
+                    #echo "*temp_QEMU_CXXFLAGS: "${temp_QEMU_CXXFLAGS}
+                    ;;
+            esac
+        done
+        QEMU_CXXFLAGS=${temp_QEMU_CXXFLAGS}
+        if [ ${fPIC_enabled} -ne 1 ]; then
+            QEMU_CXXFLAGS="${QEMU_CXXFLAGS} -fPIC"
+        fi
+        #echo "QEMU_CXXFLAGS: ${QEMU_CXXFLAGS}"
+    fi
 }
 
 compile_object() {
@@ -235,6 +261,8 @@ supported_whpx_target() {
 
 supported_target() {
     case "$1" in
+        *-libtcg)
+            ;;
         *-softmmu)
             ;;
         *-linux-user)
@@ -390,6 +418,8 @@ cocoa="no"
 softmmu="yes"
 linux_user="no"
 bsd_user="no"
+libtcg="no"
+aix="no"
 blobs="yes"
 pkgversion=""
 pie=""
@@ -812,6 +842,7 @@ Linux)
   audio_possible_drivers="oss alsa sdl pa"
   linux="yes"
   linux_user="yes"
+  libtcg="yes"
   kvm="yes"
   vhost_net="yes"
   vhost_crypto="yes"
@@ -1131,6 +1162,10 @@ for opt do
   ;;
   --enable-bsd-user) bsd_user="yes"
   ;;
+  --disable-libtcg) libtcg="no"
+  ;;
+  --enable-libtcg) libtcg="yes"
+  ;;
   --enable-pie) pie="yes"
   ;;
   --disable-pie) pie="no"
@@ -1445,6 +1480,7 @@ QEMU_CFLAGS="$CPU_CFLAGS $QEMU_CFLAGS"
 if [ "$ARCH" = "unknown" ]; then
   bsd_user="no"
   linux_user="no"
+  libtcg="no"
 fi
 
 default_target_list=""
@@ -1459,6 +1495,9 @@ if [ "$linux_user" = "yes" ]; then
 fi
 if [ "$bsd_user" = "yes" ]; then
     mak_wilds="${mak_wilds} $source_path/default-configs/*-bsd-user.mak"
+fi
+if [ "$libtcg" = "yes" ]; then
+    mak_wilds="${mak_wilds} $source_path/default-configs/*-libtcg.mak"
 fi
 
 for config in $mak_wilds; do
@@ -1633,6 +1672,7 @@ disabled with --disable-FEATURE, default is enabled if available:
   crypto-afalg    Linux AF_ALG crypto backend driver
   vhost-user      vhost-user support
   capstone        capstone disassembler support
+  libtcg          standalone TCG library
 
 NOTE: The object files are built at the place where configure is launched
 EOF
@@ -5876,6 +5916,7 @@ echo "avx2 optimization $avx2_opt"
 echo "replication support $replication"
 echo "VxHS block device $vxhs"
 echo "capstone          $capstone"
+echo "libtcg enabled    $libtcg"
 
 if test "$sdl_too_old" = "yes"; then
 echo "-> Your SDL version is too old - please upgrade to have SDL support"
@@ -6744,6 +6785,7 @@ target_softmmu="no"
 target_user_only="no"
 target_linux_user="no"
 target_bsd_user="no"
+target_libtcg="no"
 case "$target" in
   ${target_name}-softmmu)
     target_softmmu="yes"
@@ -6755,6 +6797,10 @@ case "$target" in
   ${target_name}-bsd-user)
     target_user_only="yes"
     target_bsd_user="yes"
+    ;;
+  ${target_name}-libtcg)
+    target_user_only="yes"
+    target_libtcg="yes"
     ;;
   *)
     error_exit "Target '$target' not recognised"
@@ -6969,6 +7015,9 @@ if test "$target_user_only" = "yes" ; then
 fi
 if test "$target_linux_user" = "yes" ; then
   echo "CONFIG_LINUX_USER=y" >> $config_target_mak
+fi
+if test "$target_libtcg" = "yes" ; then
+  echo "CONFIG_LIBTCG=y" >> $config_target_mak
 fi
 list=""
 if test ! -z "$gdb_xml_files" ; then

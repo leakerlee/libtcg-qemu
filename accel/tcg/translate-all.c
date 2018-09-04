@@ -815,7 +815,7 @@ void tcg_exec_init(unsigned long tb_size)
  *
  * Called with tb_lock held.
  */
-static TranslationBlock *tb_alloc(target_ulong pc)
+TranslationBlock *tb_alloc(target_ulong pc)
 {
     TranslationBlock *tb;
 

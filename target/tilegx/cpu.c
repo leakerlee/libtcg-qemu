@@ -23,34 +23,13 @@
 #include "cpu.h"
 #include "qemu-common.h"
 #include "hw/qdev-properties.h"
-#include "linux-user/syscall_defs.h"
+#ifdef CONFIG_LIBTCG
+# define TARGET_SIGSEGV 0
+#else
+# include "linux-user/syscall_defs.h"
+#endif
 #include "exec/exec-all.h"
 
-static void tilegx_cpu_dump_state(CPUState *cs, FILE *f,
-                                  fprintf_function cpu_fprintf, int flags)
-{
-    static const char * const reg_names[TILEGX_R_COUNT] = {
-         "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
-         "r8",  "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-        "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
-        "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
-        "r32", "r33", "r34", "r35", "r36", "r37", "r38", "r39",
-        "r40", "r41", "r42", "r43", "r44", "r45", "r46", "r47",
-        "r48", "r49", "r50", "r51",  "bp",  "tp",  "sp",  "lr"
-    };
-
-    TileGXCPU *cpu = TILEGX_CPU(cs);
-    CPUTLGState *env = &cpu->env;
-    int i;
-
-    for (i = 0; i < TILEGX_R_COUNT; i++) {
-        cpu_fprintf(f, "%-4s" TARGET_FMT_lx "%s",
-                    reg_names[i], env->regs[i],
-                    (i % 4) == 3 ? "\n" : " ");
-    }
-    cpu_fprintf(f, "PC  " TARGET_FMT_lx " CEX " TARGET_FMT_lx "\n\n",
-                env->pc, env->spregs[TILEGX_SPR_CMPEXCH]);
-}
 
 static ObjectClass *tilegx_cpu_class_by_name(const char *cpu_model)
 {
@@ -107,6 +86,7 @@ static void tilegx_cpu_initfn(Object *obj)
     cs->env_ptr = env;
 }
 
+#ifndef CONFIG_LIBTCG
 static void tilegx_cpu_do_interrupt(CPUState *cs)
 {
     cs->exception_index = -1;
@@ -134,6 +114,7 @@ static bool tilegx_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
     }
     return false;
 }
+#endif
 
 static void tilegx_cpu_class_init(ObjectClass *oc, void *data)
 {
@@ -149,11 +130,13 @@ static void tilegx_cpu_class_init(ObjectClass *oc, void *data)
 
     cc->class_by_name = tilegx_cpu_class_by_name;
     cc->has_work = tilegx_cpu_has_work;
+#ifndef CONFIG_LIBTCG
     cc->do_interrupt = tilegx_cpu_do_interrupt;
     cc->cpu_exec_interrupt = tilegx_cpu_exec_interrupt;
     cc->dump_state = tilegx_cpu_dump_state;
-    cc->set_pc = tilegx_cpu_set_pc;
     cc->handle_mmu_fault = tilegx_cpu_handle_mmu_fault;
+#endif
+    cc->set_pc = tilegx_cpu_set_pc;
     cc->gdb_num_core_regs = 0;
     cc->tcg_initialize = tilegx_tcg_init;
 }
